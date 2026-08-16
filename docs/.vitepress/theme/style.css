@@ -5,11 +5,13 @@
 
 .VPHero .container {
   flex-direction: column;
+  align-items: center; /* 列向 flex：这条才是把 .main 整块摆到页面中线上的 */
   text-align: center;
 }
 
 .VPHero .main {
   max-width: 100%;
+  width: 100%;
   order: 2;
 }
 
