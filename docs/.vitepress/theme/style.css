@@ -1,0 +1,93 @@
+/* ---------------------------------------------------------------
+   首页 hero：默认主题是「左文字 + 右图」布局，不给图右半边就空着。
+   这里改成居中，把整个宽度用满。
+   --------------------------------------------------------------- */
+
+.VPHero .container {
+  flex-direction: column;
+  text-align: center;
+}
+
+.VPHero .main {
+  max-width: 100%;
+  order: 2;
+}
+
+.VPHero .actions {
+  justify-content: center;
+}
+
+/* .name / .text 是收缩宽度的块元素，text-align 只能居中它们内部的文字，
+   居中元素本身要靠 auto 外边距 */
+.VPHero .name,
+.VPHero .text {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 名字退成小字辅助行，标语当主角 —— 拉开层级，别打架 */
+.VPHero .name {
+  font-size: 1.5rem;
+  line-height: 1.6;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  -webkit-text-fill-color: currentColor;
+  background: none;
+  color: var(--vp-c-text-3);
+}
+
+.VPHero .text {
+  font-size: 3rem;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+.VPHero .tagline {
+  max-width: 34rem;
+  margin: 1.2rem auto 0;
+  font-size: 1.05rem;
+  line-height: 1.8;
+}
+
+@media (min-width: 960px) {
+  .VPHero .text {
+    font-size: 3.6rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .VPHero .text {
+    font-size: 2.1rem;
+  }
+  .VPHero .name {
+    font-size: 1.15rem;
+  }
+}
+
+/* ---------------------------------------------------------------
+   首页卡片：默认边框太弱，加个悬停反馈，密度也提一点
+   --------------------------------------------------------------- */
+
+.VPFeature {
+  transition: border-color 0.25s, transform 0.25s;
+}
+
+.VPFeature:hover {
+  border-color: var(--vp-c-brand-1);
+  transform: translateY(-2px);
+}
+
+/* ---------------------------------------------------------------
+   正文：中文阅读优化
+   --------------------------------------------------------------- */
+
+.vp-doc p,
+.vp-doc li {
+  line-height: 1.8;
+}
+
+/* 表格撑满，别缩在左边 */
+.vp-doc table {
+  display: table;
+  width: 100%;
+}

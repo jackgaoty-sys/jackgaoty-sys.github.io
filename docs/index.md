@@ -2,31 +2,35 @@
 layout: home
 
 hero:
-  name: 高天杨
+  name: TAT 的技术笔记
   text: 读源码，不读文档
-  tagline: AI 应用与交付方向 · 这里是我拆解生产级项目的过程，包括推错的地方
-  actions:
-    - theme: brand
-      text: 拆解 Pi Agent
-      link: /pi/
-    - theme: alt
-      text: GitHub
-      link: https://github.com/jackgaoty-sys
+  tagline: 拆生产级项目，记真实的踩坑。方向是 AI 应用与交付。
 
+# 不放 actions 按钮：内容索引交给导航栏和下面的卡片，那两处会随内容自然增长。
+# hero 按钮如果也当目录用，加一个系列就得加一个按钮，迟早排不下。
 features:
-  - title: 拆解 Pi Agent Harness
-    details: 一个真实的 TypeScript Agent 框架，从主循环、工具执行、上下文压缩到多模型抽象，逐层读下来。目标不是"看过"，是能用大白话讲出来。
+  - title: 拆解 Pi Agent
+    details: 一个真实的 TypeScript Agent 框架，从主循环、工具执行、上下文压缩到多模型抽象，六级路线逐层读下来。
     link: /pi/
-    linkText: 进入笔记
-  - title: 我关心的问题
-    details: 玩具 loop 和生产 loop 差的那几百行到底在处理什么？答案基本都是"现实的脏"——截断、中断、换模型、叫停。这也是交付岗每天面对的东西。
+    linkText: 进入系列
+  - title: 散篇
+    details: 不成系列的短文：踩过的坑、想明白的问题、工具链上的小结论。
+    link: /posts/
+    linkText: 看看
+  - title: 关于我
+    details: 我是谁、在找什么方向的机会、怎么联系我。
+    link: /about
+    linkText: 了解
 ---
 
-<!--
-待你补充的部分：
+## 我在写什么
 
-1. hero.tagline —— 换成你自己的一句话，现在这句是占位。
-2. features —— 再加一张卡片指向 agent-jobcopilot 项目（等它公开后）。
-3. 下面可以加一段「关于我」：背景、在找什么岗位、联系方式。
-   home 布局支持在 frontmatter 之后直接写 markdown，会渲染在 features 下方。
--->
+技术文章有两种写法。一种是把文档翻译一遍，读者看完等于读了文档；另一种是**自己啃源码，把作者没写出来的意图挖出来**。这里只做第二种。
+
+所以每篇笔记里都会有三样东西：
+
+- **控制流和数据流**——不纠缠类型定义，只追代码到底怎么跑
+- **为什么这么写**——同样的功能有很多种实现，作者选了这条路，代价和收益是什么
+- **我推错的地方**——错的过程比对的结论值钱，这部分不删
+
+如果你也在读同一份源码，欢迎来 [GitHub](https://github.com/jackgaoty-sys) 拍砖。

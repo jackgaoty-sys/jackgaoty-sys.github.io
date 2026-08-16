@@ -2,29 +2,33 @@ import { defineConfig } from 'vitepress'
 
 export default defineConfig({
   lang: 'zh-CN',
-  title: '高天杨',
-  description: 'AI 应用与交付 · 源码拆解笔记',
+  title: 'TAT 的技术笔记',
+  description: '读源码、拆项目、记踩坑 · AI 应用与交付方向',
 
   cleanUrls: true,
   lastUpdated: true,
 
   themeConfig: {
+    siteTitle: 'TAT 的技术笔记',
+
     nav: [
       { text: '首页', link: '/' },
       { text: '拆解 Pi Agent', link: '/pi/' },
+      { text: '散篇', link: '/posts/' },
+      { text: '关于', link: '/about' },
     ],
 
+    // 按目录配侧边栏：每个系列一套，互不干扰。
+    // 以后加系列 = 建目录 + 在这里加一段。
     sidebar: {
       '/pi/': [
         {
           text: '拆解 Pi Agent',
-          items: [
-            { text: '总览 · 仓库地图与路线', link: '/pi/' },
-          ],
+          items: [{ text: '总览 · 仓库地图与路线', link: '/pi/' }],
         },
         {
-          // 六级路线，一次只推进一级。写完一篇就给它补上 link。
           text: '学习路线',
+          // 写完一篇，给对应那项补上 link
           items: [
             { text: '01 · Agent 主循环' },
             { text: '02 · 工具的定义与执行' },
@@ -35,11 +39,15 @@ export default defineConfig({
           ],
         },
       ],
+
+      // 散篇还没有文章，先不给侧边栏（只有一项指向自己反而像没做完）。
+      // 写了第一篇之后打开这段：
+      // '/posts/': [
+      //   { text: '散篇', items: [{ text: '第一篇的标题', link: '/posts/xxx' }] },
+      // ],
     },
 
-    socialLinks: [
-      { icon: 'github', link: 'https://github.com/jackgaoty-sys' },
-    ],
+    socialLinks: [{ icon: 'github', link: 'https://github.com/jackgaoty-sys' }],
 
     outline: { level: [2, 3], label: '本页目录' },
     docFooter: { prev: '上一篇', next: '下一篇' },
@@ -47,6 +55,7 @@ export default defineConfig({
     returnToTopLabel: '回到顶部',
     darkModeSwitchLabel: '主题',
     sidebarMenuLabel: '目录',
+    externalLinkIcon: true,
 
     search: {
       provider: 'local',
@@ -63,8 +72,8 @@ export default defineConfig({
     },
 
     footer: {
-      message: '内容为个人学习笔记，源码版权归各自作者',
-      copyright: '© 2026 高天杨',
+      message: '内容为个人学习笔记，引用的源码版权归各自作者',
+      copyright: '© 2026 TAT',
     },
   },
 })
