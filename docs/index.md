@@ -5,6 +5,7 @@ hero:
   name: TAT 的技术笔记
   text: "Programs must be written for people to read, and only incidentally for machines to execute."
 
+features:
   - title: 拆解 Pi Agent
     details: 一个真实的 TypeScript Agent 框架，从主循环、工具执行、上下文压缩到多模型抽象，六级路线逐层读下来。
     link: /pi/
