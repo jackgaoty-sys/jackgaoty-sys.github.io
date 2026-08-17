@@ -10,13 +10,9 @@
     --bg: #1b1b1f; --panel: #202127; --border: #2e2e32;
     --text: #dfdfd6; --dim: #8b8b90; --brand: #a8b1ff;
     --ok: #3dd68c; --err: #f66;
+    color-scheme: dark; /* 让滚动条、输入框等原生控件也用深色 */
   }
-  @media (prefers-color-scheme: light) {
-    :root {
-      --bg: #fff; --panel: #f6f6f7; --border: #e2e2e3;
-      --text: #3c3c43; --dim: #8b8b90; --brand: #3451b2;
-    }
-  }
+  /* 固定深色，与站点一致，不跟随系统 */
   * { box-sizing: border-box; }
   body {
     margin: 0; height: 100vh; display: flex; flex-direction: column;
