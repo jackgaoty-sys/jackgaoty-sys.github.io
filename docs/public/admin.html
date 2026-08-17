@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>写作台 · TAT 的技术笔记</title>
+<style>
+  :root {
+    --bg: #1b1b1f; --panel: #202127; --border: #2e2e32;
+    --text: #dfdfd6; --dim: #8b8b90; --brand: #a8b1ff;
+    --ok: #3dd68c; --err: #f66;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #fff; --panel: #f6f6f7; --border: #e2e2e3;
+      --text: #3c3c43; --dim: #8b8b90; --brand: #3451b2;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; height: 100vh; display: flex; flex-direction: column;
+    background: var(--bg); color: var(--text);
+    font: 14px/1.6 -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+  }
+  header h1 { font-size: 15px; margin: 0; font-weight: 600; }
+  header .spacer { flex: 1; }
+  button {
+    font: inherit; padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--panel); color: var(--text);
+  }
+  button:hover:not(:disabled) { border-color: var(--brand); }
+  button.primary { background: var(--brand); border-color: var(--brand); color: var(--bg); font-weight: 600; }
+  button:disabled { opacity: .45; cursor: not-allowed; }
+  #msg { font-size: 13px; color: var(--dim); }
+  #msg.ok { color: var(--ok); }
+  #msg.err { color: var(--err); }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  aside {
+    width: 260px; flex-shrink: 0; border-right: 1px solid var(--border);
+    overflow-y: auto; padding: 8px;
+  }
+  aside .item {
+    padding: 6px 10px; border-radius: 5px; cursor: pointer;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 13px;
+  }
+  aside .item:hover { background: var(--panel); }
+  aside .item.active { background: var(--panel); color: var(--brand); font-weight: 600; }
+
+  section { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+  #path {
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
+    font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: var(--dim);
+  }
+  #editor {
+    flex: 1; width: 100%; border: 0; resize: none; padding: 16px;
+    background: transparent; color: var(--text);
+    font-family: ui-monospace, Consolas, monospace; font-size: 13.5px; line-height: 1.75;
+  }
+  #editor:focus { outline: none; }
+
+  #setup {
+    position: fixed; inset: 0; z-index: 10; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; padding: 24px;
+  }
+  #setup .box { max-width: 520px; }
+  #setup h2 { margin: 0 0 16px; font-size: 18px; }
+  #setup p { color: var(--dim); font-size: 13px; }
+  #setup ol { color: var(--dim); font-size: 13px; padding-left: 20px; }
+  #setup code { background: var(--panel); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  #setup input {
+    width: 100%; padding: 9px 12px; margin: 12px 0;
+    border: 1px solid var(--border); border-radius: 6px;
+    background: var(--panel); color: var(--text);
+    font-family: ui-monospace, Consolas, monospace; font-size: 13px;
+  }
+  a { color: var(--brand); }
+</style>
+</head>
+<body>
+
+<div id="setup">
+  <div class="box">
+    <h2>写作台</h2>
+    <p>需要一个 GitHub Token 才能提交。Token 只存在这台浏览器的 localStorage 里，不会发给任何第三方——这个页面直接调 GitHub API。</p>
+    <ol>
+      <li>打开 <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">Fine-grained token 创建页</a></li>
+      <li>Repository access 选 <b>Only select repositories</b> → 只勾 <code>jackgaoty-sys.github.io</code></li>
+      <li>Permissions → Repository permissions → <b>Contents</b> 设为 <code>Read and write</code></li>
+      <li>生成后粘到下面</li>
+    </ol>
+    <p>务必用 fine-grained token 并且只授权这一个仓库。这样即使 token 泄漏，能被改的也只有这个博客。</p>
+    <input id="token" type="password" placeholder="github_pat_..." autocomplete="off">
+    <button class="primary" onclick="saveToken()">保存并进入</button>
+  </div>
+</div>
+
+<header>
+  <h1>写作台</h1>
+  <button onclick="newFile()">新建</button>
+  <button class="primary" id="saveBtn" onclick="save()" disabled>提交</button>
+  <span id="msg"></span>
+  <span class="spacer"></span>
+  <a href="/" target="_blank" rel="noopener">看站点 ↗</a>
+  <button onclick="logout()">退出</button>
+</header>
+
+<main>
+  <aside id="list"></aside>
+  <section>
+    <div id="path">未打开文件</div>
+    <textarea id="editor" spellcheck="false" placeholder="左边选一个文件，或者点「新建」"></textarea>
+  </section>
+</main>
+
+<script>
+const OWNER = 'jackgaoty-sys';
+const REPO  = 'jackgaoty-sys.github.io';
+const BRANCH = 'main';
+const API = 'https://api.github.com';
+
+let token = localStorage.getItem('gh_token') || '';
+let current = null; // { path, sha }
+
+const $ = id => document.getElementById(id);
+
+function msg(text, kind) {
+  $('msg').textContent = text;
+  $('msg').className = kind || '';
+}
+
+// --- base64 <-> UTF-8（中文必须走 TextEncoder，btoa 直接吃会炸）---
+function toB64(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(bin);
+}
+function fromB64(b64) {
+  const bin = atob(b64.replace(/\n/g, ''));
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+async function api(path, options = {}) {
+  const res = await fetch(API + path, {
+    ...options,
+    headers: {
+      Authorization: 'Bearer ' + token,
+      Accept: 'application/vnd.github+json',
+      ...(options.headers || {}),
+    },
+  });
+  if (!res.ok) {
+    let detail = res.statusText;
+    try { detail = (await res.json()).message || detail; } catch {}
+    throw new Error(res.status + ' ' + detail);
+  }
+  return res.json();
+}
+
+function saveToken() {
+  const v = $('token').value.trim();
+  if (!v) return;
+  localStorage.setItem('gh_token', v);
+  token = v;
+  $('setup').style.display = 'none';
+  loadList();
+}
+
+function logout() {
+  localStorage.removeItem('gh_token');
+  location.reload();
+}
+
+async function loadList() {
+  msg('读取文件列表…');
+  try {
+    const tree = await api(`/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`);
+    const files = tree.tree
+      .filter(n => n.type === 'blob' && n.path.startsWith('docs/') && n.path.endsWith('.md'))
+      .map(n => n.path)
+      .sort();
+    $('list').innerHTML = '';
+    files.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'item';
+      el.textContent = p.replace(/^docs\//, '');
+      el.title = p;
+      el.onclick = () => open(p, el);
+      $('list').appendChild(el);
+    });
+    msg(files.length + ' 个文件', 'ok');
+  } catch (e) {
+    msg('读取失败：' + e.message, 'err');
+  }
+}
+
+async function open(path, el) {
+  msg('打开中…');
+  try {
+    const file = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURI(path)}?ref=${BRANCH}`);
+    $('editor').value = fromB64(file.content);
+    current = { path, sha: file.sha };
+    $('path').textContent = path;
+    $('saveBtn').disabled = false;
+    document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
+    if (el) el.classList.add('active');
+    msg('');
+  } catch (e) {
+    msg('打开失败：' + e.message, 'err');
+  }
+}
+
+function newFile() {
+  const name = prompt('新文件路径（相对 docs/），例如 posts/rag-chunking.md');
+  if (!name) return;
+  const path = 'docs/' + name.replace(/^\/+/, '');
+  if (!path.endsWith('.md')) { msg('必须是 .md 文件', 'err'); return; }
+  current = { path, sha: null };
+  $('editor').value = '# 标题\n\n';
+  $('path').textContent = path + '（新文件，提交后才存在）';
+  $('saveBtn').disabled = false;
+  document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
+  $('editor').focus();
+}
+
+async function save() {
+  if (!current) return;
+  const note = prompt('提交说明', (current.sha ? '更新 ' : '新增 ') + current.path.replace(/^docs\//, ''));
+  if (note === null) return;
+
+  $('saveBtn').disabled = true;
+  msg('提交中…');
+  try {
+    const body = {
+      message: note || 'update',
+      content: toB64($('editor').value),
+      branch: BRANCH,
+    };
+    if (current.sha) body.sha = current.sha;
+
+    const res = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURI(current.path)}`, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+    });
+    current.sha = res.content.sha;
+    msg('已提交，Actions 正在构建，约 1 分钟后线上生效', 'ok');
+    loadList();
+  } catch (e) {
+    // 409 = 别处改过同一文件，本地 sha 过期
+    msg(e.message.startsWith('409')
+      ? '冲突：这个文件在别处被改过，刷新页面重新打开'
+      : '提交失败：' + e.message, 'err');
+  } finally {
+    $('saveBtn').disabled = false;
+  }
+}
+
+// Ctrl/Cmd + S 提交
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    if (!$('saveBtn').disabled) save();
+  }
+});
+
+if (token) {
+  $('setup').style.display = 'none';
+  loadList();
+}
+</script>
+</body>
+</html>
