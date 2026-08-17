@@ -4,6 +4,7 @@ layout: home
 hero:
   name: TAT 的技术笔记
   text: "Programs must be written for people to read, and only incidentally for machines to execute."
+  tagline: —— Abelson & Sussman，《SICP》初版前言
 
 features:
   - title: 拆解 Pi Agent

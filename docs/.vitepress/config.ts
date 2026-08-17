@@ -40,11 +40,13 @@ export default defineConfig({
         },
       ],
 
-      // 散篇还没有文章，先不给侧边栏（只有一项指向自己反而像没做完）。
-      // 写了第一篇之后打开这段：
-      // '/posts/': [
-      //   { text: '散篇', items: [{ text: '第一篇的标题', link: '/posts/xxx' }] },
-      // ],
+      '/posts/': [
+        {
+          text: '散篇',
+          // 每写一篇，在这里加一项
+          items: [{ text: '全部', link: '/posts/' }],
+        },
+      ],
     },
 
     socialLinks: [{ icon: 'github', link: 'https://github.com/jackgaoty-sys' }],
