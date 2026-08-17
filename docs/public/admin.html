@@ -51,6 +51,10 @@
   }
   aside .item:hover { background: var(--panel); }
   aside .item.active { background: var(--panel); color: var(--brand); font-weight: 600; }
+  aside .item .tag {
+    font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 6px;
+    background: var(--err); color: #fff; vertical-align: 1px;
+  }
 
   section { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #path {
@@ -149,6 +153,49 @@ function fromB64(b64) {
   return new TextDecoder().decode(bytes);
 }
 
+const isCode = p => /\.ts$/.test(p);
+
+// 提交 .ts 前的括号平衡检查。跳过字符串和注释，避免把 "{" 当成真括号。
+// 能拦住：漏闭合、多余的闭合、错配。拦不住：少逗号、拼错的 key —— 那些只能靠构建。
+function checkBalance(src) {
+  const closeToOpen = { '}': '{', ']': '[', ')': '(' };
+  const stack = [];
+  const lineOf = idx => src.slice(0, idx).split('\n').length;
+  let i = 0;
+  while (i < src.length) {
+    const c = src[i], next = src[i + 1];
+    if (c === '/' && next === '/') { while (i < src.length && src[i] !== '\n') i++; continue; }
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < src.length && !(src[i] === '*' && src[i + 1] === '/')) i++;
+      i += 2; continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      const quote = c; i++;
+      while (i < src.length) {
+        if (src[i] === '\\') { i += 2; continue; }
+        if (src[i] === quote) { i++; break; }
+        i++;
+      }
+      continue;
+    }
+    if (c === '{' || c === '[' || c === '(') { stack.push({ c, i }); i++; continue; }
+    if (closeToOpen[c]) {
+      const top = stack.pop();
+      if (!top || top.c !== closeToOpen[c]) {
+        return { ok: false, msg: `第 ${lineOf(i)} 行的 ${c} 对不上` };
+      }
+      i++; continue;
+    }
+    i++;
+  }
+  if (stack.length) {
+    const last = stack[stack.length - 1];
+    return { ok: false, msg: `第 ${lineOf(last.i)} 行的 ${last.c} 没有闭合` };
+  }
+  return { ok: true };
+}
+
 async function api(path, options = {}) {
   const res = await fetch(API + path, {
     ...options,
@@ -185,7 +232,7 @@ async function loadList() {
   try {
     const tree = await api(`/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`);
     const files = tree.tree
-      .filter(n => n.type === 'blob' && n.path.startsWith('docs/') && n.path.endsWith('.md'))
+      .filter(n => n.type === 'blob' && n.path.startsWith('docs/') && /\.(md|ts)$/.test(n.path))
       .map(n => n.path)
       .sort();
     $('list').innerHTML = '';
@@ -193,6 +240,12 @@ async function loadList() {
       const el = document.createElement('div');
       el.className = 'item';
       el.textContent = p.replace(/^docs\//, '');
+      if (isCode(p)) {
+        const tag = document.createElement('span');
+        tag.className = 'tag';
+        tag.textContent = '代码';
+        el.appendChild(tag);
+      }
       el.title = p;
       el.onclick = () => open(p, el);
       $('list').appendChild(el);
@@ -223,7 +276,7 @@ function newFile() {
   const name = prompt('新文件路径（相对 docs/），例如 posts/rag-chunking.md');
   if (!name) return;
   const path = 'docs/' + name.replace(/^\/+/, '');
-  if (!path.endsWith('.md')) { msg('必须是 .md 文件', 'err'); return; }
+  if (!/\.(md|ts)$/.test(path)) { msg('只支持 .md 和 .ts', 'err'); return; }
   current = { path, sha: null };
   $('editor').value = '# 标题\n\n';
   $('path').textContent = path + '（新文件，提交后才存在）';
@@ -234,6 +287,20 @@ function newFile() {
 
 async function save() {
   if (!current) return;
+
+  // .ts 是代码，写坏了整站构建不了 —— 先做括号检查，再要一次确认
+  if (isCode(current.path)) {
+    const r = checkBalance($('editor').value);
+    if (!r.ok) {
+      msg('括号对不上：' + r.msg + '（已拦下，未提交）', 'err');
+      return;
+    }
+    if (!confirm(
+      '这是代码文件，改错会让整站构建失败、线上停在旧版本。\n\n' +
+      '括号检查已通过，但少写逗号这类错误检查不出来。\n\n确定提交？'
+    )) return;
+  }
+
   const note = prompt('提交说明', (current.sha ? '更新 ' : '新增 ') + current.path.replace(/^docs\//, ''));
   if (note === null) return;
 
