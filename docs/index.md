@@ -7,23 +7,20 @@ hero:
   tagline: —— Abelson & Sussman，《SICP》初版前言
 
 features:
-  - title: 源码拆解
-    details: 读高质量的生产级代码，学习架构与思维。
-    link: /teardown/
-    linkText: 进去看
-  - title: 技术笔记
-    details: 系统地学一项技术
-    link: /learn/
-    linkText: 进去看
-  - title: 散篇
-    details: 不成系列的散篇。
-    link: /posts/
-    linkText: 看看
-  - title: 关于我
-    details: 我是谁、在找什么方向的机会、怎么联系我。
-    link: /about
-    linkText: 了解
+  - title: Agent 系统设计 · 意图识别
+    details: 意图识别是 Agent 的需求工程 —— 它要调用工具、改变外部状态，所以行动之前必须先弄清用户到底想达成什么。比起给请求贴固定标签，更实用的是「业务对象 + 动作 = 意图」这样一份可更新的任务模型。
+    link: /learn/agentic-system-design/01-intent-recognition
+    linkText: 读这篇
 ---
+
+<!--
+这里是「精选」，放你最想让人先读到的几篇，不是目录 ——
+目录在顶部导航里，重复一遍没有意义。
+
+写出满意的新笔记就换掉或补一张，保持 1 到 3 张。
+超过 3 张首页会变长，反而没有重点。
+-->
+
 
 ## 我在写什么
 
