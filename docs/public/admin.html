@@ -103,6 +103,7 @@
 <header>
   <h1>写作台</h1>
   <button onclick="newFile()">新建</button>
+  <button id="renameBtn" onclick="rename()" disabled>改名</button>
   <button class="primary" id="saveBtn" onclick="save()" disabled>提交</button>
   <span id="msg"></span>
   <span class="spacer"></span>
@@ -260,6 +261,7 @@ async function open(path, el) {
     current = { path, sha: file.sha };
     $('path').textContent = path;
     $('saveBtn').disabled = false;
+    $('renameBtn').disabled = false;
     document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
     if (el) el.classList.add('active');
     msg('');
@@ -277,8 +279,81 @@ function newFile() {
   $('editor').value = '# 标题\n\n';
   $('path').textContent = path + '（新文件，提交后才存在）';
   $('saveBtn').disabled = false;
+  $('renameBtn').disabled = true; // 还没有 blob，改名无从谈起
   document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
   $('editor').focus();
+}
+
+async function rename() {
+  if (!current || !current.sha) { msg('新文件先提交一次才能改名', 'err'); return; }
+
+  const oldPath = current.path;
+  const input = prompt('新路径（相对 docs/）', oldPath.replace(/^docs\//, ''));
+  if (!input) return;
+  const newPath = 'docs/' + input.replace(/^\/+/, '');
+  if (newPath === oldPath) return;
+  if (!/\.(md|ts)$/.test(newPath)) { msg('只支持 .md 和 .ts', 'err'); return; }
+
+  if (!confirm(
+    `${oldPath}
+改名为
+${newPath}
+
+改名会改变页面网址。其他文件里指向旧路径的链接会变成死链，
+而死链会让构建失败 —— 记得一并改掉引用处。
+
+继续？`
+  )) return;
+
+  $('renameBtn').disabled = true;
+  msg('改名中…');
+  try {
+    // Contents API 没有 rename，用 Git Data API 改树，一次提交搞定。
+    // 顺带把编辑器里的当前内容一起提交，等于「改名 + 保存」。
+    const blob = await api(`/repos/${OWNER}/${REPO}/git/blobs`, {
+      method: 'POST',
+      body: JSON.stringify({ content: toB64($('editor').value), encoding: 'base64' }),
+    });
+
+    const ref = await api(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+    const parent = ref.object.sha;
+    const parentCommit = await api(`/repos/${OWNER}/${REPO}/git/commits/${parent}`);
+
+    // sha: null 表示从树里删掉这个路径
+    const tree = await api(`/repos/${OWNER}/${REPO}/git/trees`, {
+      method: 'POST',
+      body: JSON.stringify({
+        base_tree: parentCommit.tree.sha,
+        tree: [
+          { path: newPath, mode: '100644', type: 'blob', sha: blob.sha },
+          { path: oldPath, mode: '100644', type: 'blob', sha: null },
+        ],
+      }),
+    });
+
+    const commit = await api(`/repos/${OWNER}/${REPO}/git/commits`, {
+      method: 'POST',
+      body: JSON.stringify({
+        message: `改名 ${oldPath.replace(/^docs\//, '')} -> ${newPath.replace(/^docs\//, '')}`,
+        tree: tree.sha,
+        parents: [parent],
+      }),
+    });
+
+    await api(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha }),
+    });
+
+    current = { path: newPath, sha: blob.sha };
+    $('path').textContent = newPath;
+    msg('已改名并提交，约 1 分钟后线上生效', 'ok');
+    loadList();
+  } catch (e) {
+    msg('改名失败：' + e.message, 'err');
+  } finally {
+    $('renameBtn').disabled = false;
+  }
 }
 
 async function save() {
