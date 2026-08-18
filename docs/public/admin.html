@@ -196,6 +196,9 @@ function checkBalance(src) {
 async function api(path, options = {}) {
   const res = await fetch(API + path, {
     ...options,
+    // GitHub 对已认证的 GET 返回 Cache-Control: private, max-age=60，
+    // 浏览器会复用旧响应 —— 读到过期的分支指针就会导致 422 not a fast forward。
+    cache: 'no-store',
     headers: {
       Authorization: 'Bearer ' + token,
       Accept: 'application/vnd.github+json',
@@ -315,42 +318,56 @@ ${newPath}
       body: JSON.stringify({ content: toB64($('editor').value), encoding: 'base64' }),
     });
 
-    const ref = await api(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
-    const parent = ref.object.sha;
-    const parentCommit = await api(`/repos/${OWNER}/${REPO}/git/commits/${parent}`);
+    // 分支可能在这期间被别处推进（本地 push、GitHub 网页编辑），
+    // 那样 PATCH 会 422 not a fast forward。重读最新指针再来一次即可。
+    const commitRename = async () => {
+      const ref = await api(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
+      const parent = ref.object.sha;
+      const parentCommit = await api(`/repos/${OWNER}/${REPO}/git/commits/${parent}`);
 
-    // sha: null 表示从树里删掉这个路径
-    const tree = await api(`/repos/${OWNER}/${REPO}/git/trees`, {
-      method: 'POST',
-      body: JSON.stringify({
-        base_tree: parentCommit.tree.sha,
-        tree: [
-          { path: newPath, mode: '100644', type: 'blob', sha: blob.sha },
-          { path: oldPath, mode: '100644', type: 'blob', sha: null },
-        ],
-      }),
-    });
+      // sha: null 表示从树里删掉这个路径
+      const tree = await api(`/repos/${OWNER}/${REPO}/git/trees`, {
+        method: 'POST',
+        body: JSON.stringify({
+          base_tree: parentCommit.tree.sha,
+          tree: [
+            { path: newPath, mode: '100644', type: 'blob', sha: blob.sha },
+            { path: oldPath, mode: '100644', type: 'blob', sha: null },
+          ],
+        }),
+      });
 
-    const commit = await api(`/repos/${OWNER}/${REPO}/git/commits`, {
-      method: 'POST',
-      body: JSON.stringify({
-        message: `改名 ${oldPath.replace(/^docs\//, '')} -> ${newPath.replace(/^docs\//, '')}`,
-        tree: tree.sha,
-        parents: [parent],
-      }),
-    });
+      const commit = await api(`/repos/${OWNER}/${REPO}/git/commits`, {
+        method: 'POST',
+        body: JSON.stringify({
+          message: `改名 ${oldPath.replace(/^docs\//, '')} -> ${newPath.replace(/^docs\//, '')}`,
+          tree: tree.sha,
+          parents: [parent],
+        }),
+      });
 
-    await api(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ sha: commit.sha }),
-    });
+      await api(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ sha: commit.sha }),
+      });
+    };
+
+    try {
+      await commitRename();
+    } catch (err) {
+      if (!err.message.startsWith('422')) throw err;
+      msg('分支已被更新，重试中…');
+      await commitRename();
+    }
 
     current = { path: newPath, sha: blob.sha };
     $('path').textContent = newPath;
     msg('已改名并提交，约 1 分钟后线上生效', 'ok');
     loadList();
   } catch (e) {
-    msg('改名失败：' + e.message, 'err');
+    msg(e.message.startsWith('422')
+      ? '改名失败：分支被并发修改，重试仍冲突 —— 刷新页面重新打开文件再试'
+      : '改名失败：' + e.message, 'err');
   } finally {
     $('renameBtn').disabled = false;
   }
