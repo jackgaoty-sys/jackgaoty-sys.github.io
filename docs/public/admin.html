@@ -409,44 +409,55 @@ async function getFileText(path) {
 // 一键建系列：模板页 + 分类页介绍 + config 的导航与侧边栏，
 // 三个文件一次提交。config 靠 @新系列-* 锚点插入，锚点不在就明确报错，
 // 不做「猜语法结构」这种会生成坏代码的事。
-const NAV_ANCHOR = '// @新系列-导航';
-const SIDEBAR_ANCHOR = '// @新系列-侧边栏';
-const INTRO_ANCHOR = '<!-- @新系列-介绍';
+// 两个顶级分类，各有自己的一套锚点
+const CATEGORIES = {
+  teardown: { label: '源码拆解', dir: 'teardown' },
+  learn: { label: '学习路线', dir: 'learn' },
+};
 
 async function newSeries() {
+  const kindInput = (prompt('放在哪个分类？' + NL + '1 = 源码拆解（读别人的代码）' + NL + '2 = 学习路线（系统学一门东西）') || '').trim();
+  const kind = kindInput === '1' ? 'teardown' : kindInput === '2' ? 'learn' : null;
+  if (!kind) { if (kindInput) msg('请输入 1 或 2', 'err'); return; }
+  const cat = CATEGORIES[kind];
+
   const slug = (prompt('系列的英文标识，用于网址（小写字母、数字、连字符）' + NL + '例如 langgraph') || '').trim();
   if (!slug) return;
   if (!/^[a-z0-9-]+$/.test(slug)) { msg('标识只能用小写字母、数字、连字符', 'err'); return; }
 
-  const title = (prompt('系列名称（中文，显示在导航和侧边栏）' + NL + '例如 拆解 LangGraph') || '').trim();
+  const title = (prompt('系列名称（中文，显示在导航和侧边栏）') || '').trim();
   if (!title) return;
 
-  const intro = (prompt('一句话简介（显示在系列分类页）') || '').trim();
+  const intro = (prompt('一句话简介（显示在分类页）') || '').trim();
   if (!intro) return;
 
-  const dir = 'docs/series/' + slug;
+  const base = '/' + cat.dir + '/' + slug + '/';
+  const dir = 'docs/' + cat.dir + '/' + slug;
+  const catIndexPath = 'docs/' + cat.dir + '/index.md';
+  const navAnchor = '// @新系列-导航-' + kind;
+  const sidebarAnchor = '// @新系列-侧边栏-' + kind;
+  const introAnchor = '<!-- @新系列-介绍-' + kind;
+
   if (!confirm(
-    '将创建系列：' + title + NL + '网址：/series/' + slug + '/' + NL + NL +
+    '分类：' + cat.label + NL + '系列：' + title + NL + '网址：' + base + NL + NL +
     '一次提交会改动三个文件：' + NL +
     '  ' + dir + '/index.md（新建）' + NL +
-    '  docs/series/index.md（加一节介绍）' + NL +
+    '  ' + catIndexPath + '（加一节介绍）' + NL +
     '  docs/.vitepress/config.ts（加导航与侧边栏）' + NL + NL + '继续？'
   )) return;
 
   msg('创建中…');
   try {
-    const [cfg, seriesIndex] = await Promise.all([
+    const [cfg, catIndex] = await Promise.all([
       getFileText('docs/.vitepress/config.ts'),
-      getFileText('docs/series/index.md'),
+      getFileText(catIndexPath),
     ]);
 
-    if (cfg.indexOf('/series/' + slug + '/') !== -1) {
-      msg('这个标识已经存在了', 'err'); return;
-    }
+    if (cfg.indexOf(base) !== -1) { msg('这个标识已经存在了', 'err'); return; }
     for (const [name, text, anchor] of [
-      ['config.ts 导航', cfg, NAV_ANCHOR],
-      ['config.ts 侧边栏', cfg, SIDEBAR_ANCHOR],
-      ['series/index.md 介绍', seriesIndex, INTRO_ANCHOR],
+      ['config.ts 导航', cfg, navAnchor],
+      ['config.ts 侧边栏', cfg, sidebarAnchor],
+      [cat.dir + '/index.md 介绍', catIndex, introAnchor],
     ]) {
       if (text.indexOf(anchor) === -1) {
         msg('找不到锚点（' + name + '），可能被删了 —— 请手动加回 ' + anchor, 'err');
@@ -454,46 +465,44 @@ async function newSeries() {
       }
     }
 
-    // 锚点前已有缩进，首行不再自带，否则会多一层
-    const navLine = "{ text: '" + title + "', link: '/series/" + slug + "/' },";
-    const newCfg1 = cfg.replace(NAV_ANCHOR, navLine + NL + '  ' + NAV_ANCHOR);
+    // 锚点前已有缩进，插入块的首行不再自带，否则会多一层
+    const navLine = "{ text: '" + title + "', link: '" + base + "' },";
+    const cfg1 = cfg.replace(navAnchor, navLine + NL + '  ' + navAnchor);
 
     const sidebarBlock =
-      "'/series/" + slug + "/': [" + NL +
+      "'" + base + "': [" + NL +
       '        {' + NL +
       "          text: '" + title + "'," + NL +
-      "          items: [{ text: '总览', link: '/series/" + slug + "/' }]," + NL +
+      "          items: [{ text: '总览', link: '" + base + "' }]," + NL +
       '        },' + NL +
       '        {' + NL +
-      "          text: '学习路线'," + NL +
+      "          text: '路线图'," + NL +
       '          // 写完一篇，给对应那项补上 link' + NL +
       '          items: [' + NL +
       "            { text: '01 · 待定' }," + NL +
       '          ],' + NL +
       '        },' + NL +
       '      ],' + NL;
-    const newCfg = newCfg1.replace(SIDEBAR_ANCHOR, sidebarBlock + NL + '      ' + SIDEBAR_ANCHOR);
+    const newCfg = cfg1.replace(sidebarAnchor, sidebarBlock + NL + '      ' + sidebarAnchor);
 
     const balance = checkBalance(newCfg);
     if (!balance.ok) { msg('生成的 config 括号不平衡（' + balance.msg + '），已中止', 'err'); return; }
 
-    const introBlock =
-      '## ' + title + NL + NL + intro + NL + NL +
-      '[进入系列 →](/series/' + slug + '/)' + NL;
-    const newIndex = seriesIndex.replace(INTRO_ANCHOR, introBlock + NL + INTRO_ANCHOR);
+    const introBlock = '## ' + title + NL + NL + intro + NL + NL + '[进入系列 →](' + base + ')' + NL;
+    const newCatIndex = catIndex.replace(introAnchor, introBlock + NL + introAnchor);
 
     const doc =
       '# ' + title + NL + NL + intro + NL + NL +
-      '## 学习路线' + NL + NL +
+      '## 路线图' + NL + NL +
       '| # | 主题 | 源码落点 | 笔记 | 状态 |' + NL +
       '|---|------|---------|------|------|' + NL +
       '| 1 | 待定 | 待定 | — | 🔲 |' + NL + NL +
       '状态图例：🔲 未开始 ｜ 🚧 进行中 ｜ ✅ 读完并能讲出来' + NL;
 
     const docPath = dir + '/index.md';
-    const shas = await commitFiles('新建系列：' + title, [
+    const shas = await commitFiles('新建系列：' + title + '（' + cat.label + '）', [
       { path: docPath, content: doc },
-      { path: 'docs/series/index.md', content: newIndex },
+      { path: catIndexPath, content: newCatIndex },
       { path: 'docs/.vitepress/config.ts', content: newCfg },
     ]);
 

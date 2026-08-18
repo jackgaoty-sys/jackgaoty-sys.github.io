@@ -20,12 +20,16 @@ function postSidebarItems() {
     })
 }
 
-// 「系列」是分类，具体项目是它下面的内容。
-// 导航永远只有 4 项，加多少系列都不会撑爆 —— 新系列在这里加一行即可。
-const series = [
-  { text: '拆解 Pi Agent', link: '/series/pi/' },
-  { text: 'Agent系统设计', link: '/series/agentic-system-design/' },
-  // @新系列-导航（写作台按此锚点插入，勿删）
+// 两个顶级分类：源码拆解读别人的代码，学习路线是系统学一门东西。
+// 新系列在对应数组里加一行，写作台按 @新系列-* 锚点自动插入。
+const teardowns = [
+  { text: '拆解 Pi Agent', link: '/teardown/pi/' },
+  // @新系列-导航-teardown（写作台按此锚点插入，勿删）
+]
+
+const learnings = [
+  { text: 'Agent系统设计', link: '/learn/agentic-system-design/' },
+  // @新系列-导航-learn（写作台按此锚点插入，勿删）
 ]
 
 export default defineConfig({
@@ -58,31 +62,31 @@ export default defineConfig({
 
     nav: [
       { text: '首页', link: '/' },
-      { text: '系列', link: '/series/' },
+      { text: '源码拆解', link: '/teardown/' },
+      { text: '学习路线', link: '/learn/' },
       { text: '散篇', link: '/posts/' },
       { text: '关于', link: '/about' },
     ],
 
     // 按目录配侧边栏：每个系列一套，互不干扰。
     // 以后加系列 = 建目录 + 在这里加一段。
+    // 按目录配侧边栏。VitePress 取最长匹配前缀，
+    // 所以分类页用 '/teardown/'，进到具体系列里换成 '/teardown/pi/' 那套。
     sidebar: {
-      // 分类页：列出所有系列
-      '/series/': [
+      '/teardown/': [
         {
-          text: '系列',
-          items: [{ text: '全部', link: '/series/' }, ...series],
+          text: '源码拆解',
+          items: [{ text: '全部', link: '/teardown/' }, ...teardowns],
         },
       ],
 
-      // 每个系列有自己的路线图侧边栏。注意这条要排在 '/series/' 之后，
-      // VitePress 取最长匹配前缀，所以进到 pi 里会用下面这套。
-      '/series/pi/': [
+      '/teardown/pi/': [
         {
           text: '拆解 Pi Agent',
-          items: [{ text: '总览 · 仓库地图与路线', link: '/series/pi/' }],
+          items: [{ text: '总览 · 仓库地图与路线', link: '/teardown/pi/' }],
         },
         {
-          text: '学习路线',
+          text: '路线图',
           // 写完一篇，给对应那项补上 link
           items: [
             { text: '01 · Agent 主循环' },
@@ -95,21 +99,29 @@ export default defineConfig({
         },
       ],
 
-      '/series/agentic-system-design/': [
-        {
-          text: 'Agent系统设计',
-          items: [{ text: '总览', link: '/series/agentic-system-design/' }],
-        },
+      // @新系列-侧边栏-teardown（写作台按此锚点插入，勿删）
+
+      '/learn/': [
         {
           text: '学习路线',
-          // 写完一篇，给对应那项补上 link
+          items: [{ text: '全部', link: '/learn/' }, ...learnings],
+        },
+      ],
+
+      '/learn/agentic-system-design/': [
+        {
+          text: 'Agent系统设计',
+          items: [{ text: '总览', link: '/learn/agentic-system-design/' }],
+        },
+        {
+          text: '路线图',
           items: [
             { text: '01 · 待定' },
           ],
         },
       ],
 
-      // @新系列-侧边栏（写作台按此锚点插入，勿删）
+      // @新系列-侧边栏-learn（写作台按此锚点插入，勿删）
 
       '/posts/': [
         {

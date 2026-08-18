@@ -19,7 +19,7 @@ packages/coding-agent  最外层：CLI 外壳、TUI、扩展、配置
 
 其余包（tui / server / protocol / session-backends / telemetry / evals / client）暂时不看。
 
-## 学习路线
+## 路线图
 
 | # | 主题 | 源码落点 | 笔记 | 状态 |
 |---|------|---------|------|------|

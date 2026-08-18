@@ -7,10 +7,14 @@ hero:
   tagline: —— Abelson & Sussman，《SICP》初版前言
 
 features:
-  - title: 拆解 Pi Agent
-    details: 一个真实的 TypeScript Agent 框架，从主循环、工具执行、上下文压缩到多模型抽象，六级路线逐层读下来。
-    link: /series/pi/
-    linkText: 进入系列
+  - title: 源码拆解
+    details: 读别人写的生产级代码，一级一级往下拆。目前在拆 Pi Agent —— 一个真实的 TypeScript Agent Harness。
+    link: /teardown/
+    linkText: 进去看
+  - title: 学习路线
+    details: 系统地学一门东西，从不会到能用，把过程记下来。
+    link: /learn/
+    linkText: 进去看
   - title: 散篇
     details: 不成系列的短文：踩过的坑、想明白的问题、工具链上的小结论。
     link: /posts/
