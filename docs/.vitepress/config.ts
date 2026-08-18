@@ -28,6 +28,13 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
+  markdown: {
+    // 单个回车即换行，符合直觉。
+    // 前提是段落整段写在一行 —— 若把段落硬折成多行，每一折都会变成真换行。
+    // 代码块不受影响：围栏内的换行本来就原样保留。
+    breaks: true,
+  },
+
   // 每次访问默认深色，但右上角开关保留可用。
   // 'dark' 只在「没存过偏好」时生效，所以配合下面 head 里的清除脚本：
   // 每次加载先抹掉存的偏好，VitePress 就会重新落回深色默认。
