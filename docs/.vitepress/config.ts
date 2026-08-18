@@ -103,7 +103,7 @@ export default defineConfig({
     nav: [
       { text: '首页', link: '/' },
       { text: '源码拆解', link: '/teardown/' },
-      { text: '学习路线', link: '/learn/' },
+      { text: '技术笔记', link: '/learn/' },
       { text: '散篇', link: '/posts/' },
       { text: '关于', link: '/about' },
     ],
