@@ -318,10 +318,19 @@ async function save() {
     msg('已提交，Actions 正在构建，约 1 分钟后线上生效', 'ok');
     loadList();
   } catch (e) {
-    // 409 = 别处改过同一文件，本地 sha 过期
-    msg(e.message.startsWith('409')
-      ? '冲突：这个文件在别处被改过，刷新页面重新打开'
-      : '提交失败：' + e.message, 'err');
+    // 读公开仓库任何 token 都行，所以「能列出文件」不代表有写权限，
+    // 403 基本都是 Contents 权限不足或仓库没勾上。
+    let hint = '提交失败：' + e.message;
+    if (e.message.startsWith('403')) {
+      hint = '403 权限不足 —— 去 Settings > Personal access tokens 打开这个 token，'
+           + '确认 Repository access 勾了本仓库、且 Permissions > Contents 是 Read and write，'
+           + '改完点 Update token 即可，不用重新生成';
+    } else if (e.message.startsWith('409')) {
+      hint = '冲突：这个文件在别处被改过，刷新页面重新打开';
+    } else if (e.message.startsWith('401')) {
+      hint = '401 token 无效或已过期，点「退出」重新粘一个';
+    }
+    msg(hint, 'err');
   } finally {
     $('saveBtn').disabled = false;
   }
