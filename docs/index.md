@@ -8,15 +8,15 @@ hero:
 
 features:
   - title: 源码拆解
-    details: 读别人写的生产级代码，一级一级往下拆。目前在拆 Pi Agent —— 一个真实的 TypeScript Agent Harness。
+    details: 读高质量的生产级代码，学习架构与思维。
     link: /teardown/
     linkText: 进去看
-  - title: 学习路线
-    details: 系统地学一门东西，从不会到能用，把过程记下来。
+  - title: 技术笔记
+    details: 系统地学一项技术
     link: /learn/
     linkText: 进去看
   - title: 散篇
-    details: 不成系列的短文：踩过的坑、想明白的问题、工具链上的小结论。
+    details: 不成系列的散篇。
     link: /posts/
     linkText: 看看
   - title: 关于我
