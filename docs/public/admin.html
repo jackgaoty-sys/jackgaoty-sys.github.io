@@ -442,7 +442,9 @@ async function newSeries() {
   const docPath = 'docs/' + dirRel + '/index.md';
   const catIndexPath = 'docs/' + cat.dir + '/index.md';
   const DEF_ANCHOR = '// @新系列-定义';
-  const introAnchor = '<!-- @新系列-介绍-' + kind;
+  // 拆开写：脚本正文一旦出现 HTML 注释开头或 script 开标签的完整字面量，
+  // 浏览器解析器会进入 escaped 状态，结束标签失效、整段代码作废。
+  const introAnchor = '<' + '!-- @新系列-介绍-' + kind;
 
   if (!confirm(
     '分类：' + cat.label + NL + '系列：' + title + NL + '网址：' + base + NL + NL +
@@ -487,7 +489,7 @@ async function newSeries() {
     const doc =
       '# ' + title + NL + NL + intro + NL + NL +
       '## 路线图' + NL + NL +
-      '<script setup>' + NL +
+      '<scr' + 'ipt setup>' + NL +
       "import { data as roadmap } from '../../roadmap.data.ts'" + NL +
       "const rows = roadmap['" + dirRel + "'] || []" + NL +
       "const ICON = { '未开始': '🔲', '进行中': '🚧', '完成': '✅' }" + NL +
