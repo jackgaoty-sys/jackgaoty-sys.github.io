@@ -2,7 +2,7 @@ import { defineConfig } from 'vitepress'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { SERIES, leadNum } from './series'
+import { SERIES, mergeRoadmap } from './series'
 
 const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -29,18 +29,13 @@ function articlesIn(dirRel: string) {
     })
 }
 
-// 系列的路线图 = 已写的文章（自动扫出来）+ 还没写的占位项。
-// 占位项若已有同编号的文件，就不再重复显示。
+// 系列的路线图：已写的文章（扫目录）+ 还没写的占位项，合并逻辑在 series.ts
 function roadmap(dirRel: string, pending: string[]) {
-  const written = articlesIn(dirRel)
-  const doneNums = new Set(
-    written.map((w) => leadNum(w.link.slice(w.link.lastIndexOf('/') + 1))).filter(Boolean)
+  // 侧边栏用 { text, link }，合并逻辑用 { title, link }，两端转一下
+  const written = articlesIn(dirRel).map((a) => ({ title: a.text, link: a.link }))
+  return mergeRoadmap(written, pending).map((r) =>
+    r.link ? { text: r.title, link: r.link } : { text: r.title }
   )
-  const rest = pending.filter((t) => {
-    const n = leadNum(t)
-    return !n || !doneNums.has(n)
-  })
-  return [...written, ...rest.map((text) => ({ text }))]
 }
 
 function postSidebarItems() {

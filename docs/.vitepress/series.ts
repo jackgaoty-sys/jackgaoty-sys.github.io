@@ -36,6 +36,7 @@ export const SERIES: SeriesDef[] = [
 
 /** 取开头连续数字，用来让已写文件顶掉同编号的 pending 条目 */
 export function leadNum(s: string): string {
+  if (!s) return ''
   let out = ''
   for (const c of s) {
     if (c >= '0' && c <= '9') out += c
@@ -43,3 +44,43 @@ export function leadNum(s: string): string {
   }
   return out
 }
+
+export interface RoadmapItem {
+  title: string
+  link?: string | null
+  source?: string
+  status?: string
+}
+
+/**
+ * 合并「已写的文章」和「还没写的占位项」。
+ * 占位项若已有同编号的文章就不再显示 —— 编号可以写在标题里（01. xxx）
+ * 也可以写在文件名里（01-xxx.md），两者取到哪个算哪个。
+ */
+export function mergeRoadmap(written: RoadmapItem[], pending: string[]): RoadmapItem[] {
+  const numOf = (it: RoadmapItem) => {
+    const fromTitle = leadNum(it.title)
+    if (fromTitle) return fromTitle
+    const link = it.link || ''
+    return leadNum(link.slice(link.lastIndexOf('/') + 1))
+  }
+
+  // 有编号的按编号排，没编号的排在后面并保持原有顺序
+  const sorted = [...written].sort((a, b) => {
+    const na = numOf(a)
+    const nb = numOf(b)
+    if (na && nb) return na.localeCompare(nb)
+    if (na) return -1
+    if (nb) return 1
+    return 0
+  })
+
+  const doneNums = new Set(sorted.map(numOf).filter(Boolean))
+  const rest = pending.filter((t) => {
+    const n = leadNum(t)
+    return !n || !doneNums.has(n)
+  })
+
+  return [...sorted, ...rest.map((title) => ({ title, link: null, source: '', status: '未开始' }))]
+}
+

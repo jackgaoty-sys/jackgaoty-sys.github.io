@@ -1,5 +1,5 @@
 import { createContentLoader } from 'vitepress'
-import { SERIES, leadNum } from './.vitepress/series'
+import { SERIES, mergeRoadmap } from './.vitepress/series'
 
 export interface RoadmapRow {
   title: string
@@ -35,16 +35,8 @@ export default createContentLoader(['teardown/*/*.md', 'learn/*/*.md'], {
 
     const out: Record<string, RoadmapRow[]> = {}
     for (const s of SERIES) {
-      const done = (written[s.dir] || []).sort((a, b) => a.slug.localeCompare(b.slug))
-      const doneNums = new Set(done.map((d) => leadNum(d.slug)).filter(Boolean))
-      const rest = s.pending.filter((t) => {
-        const n = leadNum(t)
-        return !n || !doneNums.has(n)
-      })
-      out[s.dir] = [
-        ...done.map(({ slug, ...row }) => row),
-        ...rest.map((title) => ({ title, link: null, source: '', status: '未开始' })),
-      ]
+      const done = (written[s.dir] || []).map(({ slug, ...row }) => row)
+      out[s.dir] = mergeRoadmap(done, s.pending) as RoadmapRow[]
     }
     return out
   },
