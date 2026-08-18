@@ -437,79 +437,86 @@ async function newSeries() {
   const intro = (prompt('一句话简介（显示在分类页）') || '').trim();
   if (!intro) return;
 
-  const base = '/' + cat.dir + '/' + slug + '/';
-  const dir = 'docs/' + cat.dir + '/' + slug;
+  const dirRel = cat.dir + '/' + slug;          // teardown/langgraph
+  const base = '/' + dirRel + '/';
+  const docPath = 'docs/' + dirRel + '/index.md';
   const catIndexPath = 'docs/' + cat.dir + '/index.md';
-  const navAnchor = '// @新系列-导航-' + kind;
-  const sidebarAnchor = '// @新系列-侧边栏-' + kind;
+  const DEF_ANCHOR = '// @新系列-定义';
   const introAnchor = '<!-- @新系列-介绍-' + kind;
 
   if (!confirm(
     '分类：' + cat.label + NL + '系列：' + title + NL + '网址：' + base + NL + NL +
     '一次提交会改动三个文件：' + NL +
-    '  ' + dir + '/index.md（新建）' + NL +
+    '  ' + docPath + '（新建）' + NL +
     '  ' + catIndexPath + '（加一节介绍）' + NL +
-    '  docs/.vitepress/config.ts（加导航与侧边栏）' + NL + NL + '继续？'
+    '  docs/.vitepress/series.ts（加系列定义）' + NL + NL + '继续？'
   )) return;
 
   msg('创建中…');
   try {
-    const [cfg, catIndex] = await Promise.all([
-      getFileText('docs/.vitepress/config.ts'),
+    const [defs, catIndex] = await Promise.all([
+      getFileText('docs/.vitepress/series.ts'),
       getFileText(catIndexPath),
     ]);
 
-    if (cfg.indexOf(base) !== -1) { msg('这个标识已经存在了', 'err'); return; }
-    for (const [name, text, anchor] of [
-      ['config.ts 导航', cfg, navAnchor],
-      ['config.ts 侧边栏', cfg, sidebarAnchor],
-      [cat.dir + '/index.md 介绍', catIndex, introAnchor],
-    ]) {
-      if (text.indexOf(anchor) === -1) {
-        msg('找不到锚点（' + name + '），可能被删了 —— 请手动加回 ' + anchor, 'err');
-        return;
-      }
+    if (defs.indexOf("'" + dirRel + "'") !== -1) { msg('这个标识已经存在了', 'err'); return; }
+    if (defs.indexOf(DEF_ANCHOR) === -1) {
+      msg('找不到锚点（series.ts 定义），请手动加回 ' + DEF_ANCHOR, 'err'); return;
+    }
+    if (catIndex.indexOf(introAnchor) === -1) {
+      msg('找不到锚点（' + cat.dir + '/index.md 介绍），请手动加回 ' + introAnchor, 'err'); return;
     }
 
-    // 锚点前已有缩进，插入块的首行不再自带，否则会多一层
-    const navLine = "{ text: '" + title + "', link: '" + base + "' },";
-    const cfg1 = cfg.replace(navAnchor, navLine + NL + '  ' + navAnchor);
+    // 锚点前已有缩进，插入块首行不再自带
+    const defBlock =
+      '{' + NL +
+      "    dir: '" + dirRel + "'," + NL +
+      "    title: '" + title + "'," + NL +
+      "    category: '" + kind + "'," + NL +
+      "    pending: ['01 · 待定']," + NL +
+      '  },' + NL;
+    const newDefs = defs.replace(DEF_ANCHOR, defBlock + '  ' + DEF_ANCHOR);
 
-    const sidebarBlock =
-      "'" + base + "': [" + NL +
-      '        {' + NL +
-      "          text: '" + title + "'," + NL +
-      "          items: [{ text: '总览', link: '" + base + "' }]," + NL +
-      '        },' + NL +
-      '        {' + NL +
-      "          text: '路线图'," + NL +
-      '          // 写完一篇，给对应那项补上 link' + NL +
-      '          items: [' + NL +
-      "            { text: '01 · 待定' }," + NL +
-      '          ],' + NL +
-      '        },' + NL +
-      '      ],' + NL;
-    const newCfg = cfg1.replace(sidebarAnchor, sidebarBlock + NL + '      ' + sidebarAnchor);
-
-    const balance = checkBalance(newCfg);
-    if (!balance.ok) { msg('生成的 config 括号不平衡（' + balance.msg + '），已中止', 'err'); return; }
+    const balance = checkBalance(newDefs);
+    if (!balance.ok) { msg('生成的 series.ts 括号不平衡（' + balance.msg + '），已中止', 'err'); return; }
 
     const introBlock = '## ' + title + NL + NL + intro + NL + NL + '[进入系列 →](' + base + ')' + NL;
     const newCatIndex = catIndex.replace(introAnchor, introBlock + NL + introAnchor);
 
+    // 总览页的路线图表格由 roadmap.data.ts 生成，不写死
     const doc =
       '# ' + title + NL + NL + intro + NL + NL +
       '## 路线图' + NL + NL +
-      '| # | 主题 | 源码落点 | 笔记 | 状态 |' + NL +
-      '|---|------|---------|------|------|' + NL +
-      '| 1 | 待定 | 待定 | — | 🔲 |' + NL + NL +
-      '状态图例：🔲 未开始 ｜ 🚧 进行中 ｜ ✅ 读完并能讲出来' + NL;
+      '<script setup>' + NL +
+      "import { data as roadmap } from '../../roadmap.data.ts'" + NL +
+      "const rows = roadmap['" + dirRel + "'] || []" + NL +
+      "const ICON = { '未开始': '🔲', '进行中': '🚧', '完成': '✅' }" + NL +
+      '</' + 'script>' + NL + NL +
+      '<table class="roadmap">' + NL +
+      '  <thead>' + NL +
+      '    <tr><th>#</th><th>主题</th><th>源码落点</th><th>状态</th></tr>' + NL +
+      '  </thead>' + NL +
+      '  <tbody>' + NL +
+      '    <tr v-for="(r, i) in rows" :key="r.title">' + NL +
+      '      <td>{{ i + 1 }}</td>' + NL +
+      '      <td>' + NL +
+      '        <a v-if="r.link" :href="r.link">{{ r.title }}</a>' + NL +
+      '        <span v-else class="pending">{{ r.title }}</span>' + NL +
+      '      </td>' + NL +
+      '      <td><code v-if="r.source">{{ r.source }}</code><span v-else>—</span></td>' + NL +
+      "      <td>{{ ICON[r.status] || '' }} {{ r.status }}</td>" + NL +
+      '    </tr>' + NL +
+      '  </tbody>' + NL +
+      '</table>' + NL + NL +
+      '<style scoped>' + NL +
+      '.roadmap { display: table; width: 100%; }' + NL +
+      '.roadmap .pending { color: var(--vp-c-text-3); }' + NL +
+      '</style>' + NL;
 
-    const docPath = dir + '/index.md';
     const shas = await commitFiles('新建系列：' + title + '（' + cat.label + '）', [
       { path: docPath, content: doc },
       { path: catIndexPath, content: newCatIndex },
-      { path: 'docs/.vitepress/config.ts', content: newCfg },
+      { path: 'docs/.vitepress/series.ts', content: newDefs },
     ]);
 
     current = { path: docPath, sha: shas[docPath] };
@@ -517,7 +524,7 @@ async function newSeries() {
     $('path').textContent = docPath;
     $('saveBtn').disabled = false;
     $('renameBtn').disabled = false;
-    msg('系列已创建，已为你打开总览页，可以直接改', 'ok');
+    msg('系列已创建，路线图会随你写文章自动更新', 'ok');
     loadList();
   } catch (e) {
     msg('创建失败：' + e.message, 'err');

@@ -2,6 +2,7 @@ import { defineConfig } from 'vitepress'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { SERIES, leadNum } from './series'
 
 const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -11,16 +12,6 @@ function firstHeading(src: string, fallback: string) {
     if (line.startsWith('# ')) return line.slice(2).trim()
   }
   return fallback
-}
-
-// 取开头的连续数字，用来把「已写的文件」和「路线图占位项」对上号
-function leadNum(s: string) {
-  let out = ''
-  for (const c of s) {
-    if (c >= '0' && c <= '9') out += c
-    else break
-  }
-  return out
 }
 
 // 扫某个目录下真实存在的文章，按文件名排序
@@ -56,17 +47,23 @@ function postSidebarItems() {
   return articlesIn('posts')
 }
 
-// 两个顶级分类：源码拆解读别人的代码，学习路线是系统学一门东西。
-// 新系列在对应数组里加一行，写作台按 @新系列-* 锚点自动插入。
-const teardowns = [
-  { text: '拆解 Pi Agent', link: '/teardown/pi/' },
-  // @新系列-导航-teardown（写作台按此锚点插入，勿删）
+// 导航与侧边栏都从 series.ts 生成，那里是系列的唯一定义处。
+const navOf = (category: string) =>
+  SERIES.filter((x) => x.category === category).map((x) => ({ text: x.title, link: '/' + x.dir + '/' }))
+
+// 每个系列的路线图侧边栏：已写的自动扫出来，接上还没写的占位项
+const sidebarOf = (s: { dir: string; title: string; pending: string[] }) => [
+  {
+    text: s.title,
+    items: [{ text: '总览', link: '/' + s.dir + '/' }],
+  },
+  {
+    text: '路线图',
+    items: roadmap(s.dir, s.pending),
+  },
 ]
 
-const learnings = [
-  { text: 'Agent系统设计', link: '/learn/agentic-system-design/' },
-  // @新系列-导航-learn（写作台按此锚点插入，勿删）
-]
+const seriesSidebars = Object.fromEntries(SERIES.map((s) => ['/' + s.dir + '/', sidebarOf(s)]))
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -112,53 +109,24 @@ export default defineConfig({
     // 以后加系列 = 建目录 + 在这里加一段。
     // 按目录配侧边栏。VitePress 取最长匹配前缀，
     // 所以分类页用 '/teardown/'，进到具体系列里换成 '/teardown/pi/' 那套。
+    // 分类页固定；每个系列自己的路线图侧边栏由 series.ts 生成。
+    // VitePress 取最长匹配前缀，所以进到具体系列会用 seriesSidebars 那套。
     sidebar: {
       '/teardown/': [
         {
           text: '源码拆解',
-          items: [{ text: '全部', link: '/teardown/' }, ...teardowns],
+          items: [{ text: '全部', link: '/teardown/' }, ...navOf('teardown')],
         },
       ],
-
-      '/teardown/pi/': [
-        {
-          text: '拆解 Pi Agent',
-          items: [{ text: '总览 · 仓库地图与路线', link: '/teardown/pi/' }],
-        },
-        {
-          text: '路线图',
-          items: roadmap('teardown/pi', [
-            '01 · Agent 主循环',
-            '02 · 工具的定义与执行',
-            '03 · 上下文管理与压缩',
-            '04 · 多模型统一抽象',
-            '05 · 系统提示词与 Skills',
-            '06 · CLI 外壳怎么包',
-          ]),
-        },
-      ],
-
-      // @新系列-侧边栏-teardown（写作台按此锚点插入，勿删）
 
       '/learn/': [
         {
           text: '学习路线',
-          items: [{ text: '全部', link: '/learn/' }, ...learnings],
+          items: [{ text: '全部', link: '/learn/' }, ...navOf('learn')],
         },
       ],
 
-      '/learn/agentic-system-design/': [
-        {
-          text: 'Agent系统设计',
-          items: [{ text: '总览', link: '/learn/agentic-system-design/' }],
-        },
-        {
-          text: '路线图',
-          items: roadmap('learn/agentic-system-design', ['01 · 待定']),
-        },
-      ],
-
-      // @新系列-侧边栏-learn（写作台按此锚点插入，勿删）
+      ...seriesSidebars,
 
       '/posts/': [
         {

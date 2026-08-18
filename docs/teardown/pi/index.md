@@ -21,31 +21,43 @@ packages/coding-agent  最外层：CLI 外壳、TUI、扩展、配置
 
 ## 路线图
 
-| # | 主题 | 源码落点 | 笔记 | 状态 |
-|---|------|---------|------|------|
-| 1 | Agent 主循环 | `packages/agent/src/agent-loop.ts` | 整理中 | 🚧 进行中 |
-| 2 | 工具的定义与执行 | `packages/agent/src/harness/tools/` | — | 🔲 |
-| 3 | 上下文管理与压缩 | `harness/session/`、`harness/compaction/` | — | 🔲 |
-| 4 | 多模型统一抽象 | `packages/ai/src/providers/` | — | 🔲 |
-| 5 | 系统提示词与 Skills | `harness/system-prompt.ts`、`skills.ts` | — | 🔲 |
-| 6 | CLI 外壳怎么包 | `packages/coding-agent/src/` | — | 🔲 |
+<script setup>
+import { data as roadmap } from '../../roadmap.data.ts'
+const rows = roadmap['teardown/pi'] || []
+const ICON = { '未开始': '🔲', '进行中': '🚧', '完成': '✅' }
+</script>
 
-状态图例：🔲 未开始 ｜ 🚧 进行中 ｜ ✅ 读完并能讲出来
+<table class="roadmap">
+  <thead>
+    <tr><th>#</th><th>主题</th><th>源码落点</th><th>状态</th></tr>
+  </thead>
+  <tbody>
+    <tr v-for="(r, i) in rows" :key="r.title">
+      <td>{{ i + 1 }}</td>
+      <td>
+        <a v-if="r.link" :href="r.link">{{ r.title }}</a>
+        <span v-else class="pending">{{ r.title }}</span>
+      </td>
+      <td><code v-if="r.source">{{ r.source }}</code><span v-else>—</span></td>
+      <td>{{ ICON[r.status] || '' }} {{ r.status }}</td>
+    </tr>
+  </tbody>
+</table>
 
-## 源码出处与许可
+<style scoped>
+.roadmap { display: table; width: 100%; }
+.roadmap .pending { color: var(--vp-c-text-3); }
+</style>
 
-本系列笔记中引用的所有源码来自 [earendil-works/pi](https://github.com/earendil-works/pi)，
-以 MIT 许可证发布：
+<!--
+这张表和左侧「路线图」侧边栏来自同一份数据，不用手写：
+- 已写的文章自动扫出来，标题取文件里的一级标题
+- 还没写的条目在 docs/.vitepress/series.ts 的 pending 里
+- 写好同编号的文件（如 01-xxx.md）会自动顶掉 '01 · ...' 那条占位
 
-> MIT License — Copyright (c) 2025 Mario Zechner
->
-> 完整许可证文本见[上游仓库 LICENSE](https://github.com/earendil-works/pi/blob/main/LICENSE)。
-
-笔记正文（我写的分析、图表、推导过程）版权归我所有。
-
-## 我给自己定的规矩
-
-1. **一次只推进一级**，不跳级。
-2. 每级的结业标准：**能用大白话把它讲给不懂技术的人听**，而不是"看过了"。
-3. 看不懂的类型定义先跳过，**只追控制流和数据流**。
-4. 笔记里必须有**我自己推错的地方**，错的过程比对的结论值钱。
+文章可选 frontmatter：
+---
+source: packages/agent/src/agent-loop.ts
+status: 进行中
+---
+-->
