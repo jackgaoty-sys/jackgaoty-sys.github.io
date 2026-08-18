@@ -24,6 +24,7 @@ function postSidebarItems() {
 // 导航永远只有 4 项，加多少系列都不会撑爆 —— 新系列在这里加一行即可。
 const series = [
   { text: '拆解 Pi Agent', link: '/series/pi/' },
+  // @新系列-导航（写作台按此锚点插入，勿删）
 ]
 
 export default defineConfig({
@@ -92,6 +93,8 @@ export default defineConfig({
           ],
         },
       ],
+
+      // @新系列-侧边栏（写作台按此锚点插入，勿删）
 
       '/posts/': [
         {

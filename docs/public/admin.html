@@ -103,6 +103,7 @@
 <header>
   <h1>写作台</h1>
   <button onclick="newFile()">新建</button>
+  <button onclick="newSeries()">新建系列</button>
   <button id="renameBtn" onclick="rename()" disabled>改名</button>
   <button class="primary" id="saveBtn" onclick="save()" disabled>提交</button>
   <span id="msg"></span>
@@ -128,6 +129,7 @@ const API = 'https://api.github.com';
 let token = localStorage.getItem('gh_token') || '';
 let current = null; // { path, sha }
 
+const NL = String.fromCharCode(10);
 const $ = id => document.getElementById(id);
 
 function msg(text, kind) {
@@ -287,6 +289,168 @@ function newFile() {
   $('editor').focus();
 }
 
+// 一次提交多个文件（新增/覆盖/删除），走 Git Data API。
+// files: [{ path, content }] 写入；[{ path, del: true }] 删除。
+// 返回 path -> blob sha，供调用方更新本地状态。
+async function commitFiles(message, files) {
+  const entries = [];
+  for (const f of files) {
+    if (f.del) {
+      entries.push({ path: f.path, mode: '100644', type: 'blob', sha: null });
+      continue;
+    }
+    const b = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/blobs`, {
+      method: 'POST',
+      body: JSON.stringify({ content: toB64(f.content), encoding: 'base64' }),
+    });
+    entries.push({ path: f.path, mode: '100644', type: 'blob', sha: b.sha });
+  }
+
+  // 分支可能在这期间被别处推进（本地 push、GitHub 网页编辑），
+  // 那样 PATCH 会 422 not a fast forward。重读最新指针再来一次即可。
+  const doCommit = async () => {
+    const ref = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/ref/heads/${DOL}{BRANCH}`);
+    const parent = ref.object.sha;
+    const parentCommit = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/commits/${DOL}{parent}`);
+    const tree = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/trees`, {
+      method: 'POST',
+      body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree: entries }),
+    });
+    const commit = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/commits`, {
+      method: 'POST',
+      body: JSON.stringify({ message, tree: tree.sha, parents: [parent] }),
+    });
+    await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/refs/heads/${DOL}{BRANCH}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ sha: commit.sha }),
+    });
+  };
+
+  try {
+    await doCommit();
+  } catch (e) {
+    if (!e.message.startsWith('422')) throw e;
+    msg('分支已被更新，重试中…');
+    await doCommit();
+  }
+
+  const shas = {};
+  entries.forEach((e) => { if (e.sha) shas[e.path] = e.sha; });
+  return shas;
+}
+
+async function getFileText(path) {
+  const f = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/contents/${DOL}{encodeURI(path)}?ref=${DOL}{BRANCH}`);
+  return fromB64(f.content);
+}
+
+// 一键建系列：模板页 + 分类页介绍 + config 的导航与侧边栏，
+// 三个文件一次提交。config 靠 @新系列-* 锚点插入，锚点不在就明确报错，
+// 不做「猜语法结构」这种会生成坏代码的事。
+const NAV_ANCHOR = '// @新系列-导航';
+const SIDEBAR_ANCHOR = '// @新系列-侧边栏';
+const INTRO_ANCHOR = '<!-- @新系列-介绍';
+
+async function newSeries() {
+  const slug = (prompt('系列的英文标识，用于网址（小写字母、数字、连字符）' + NL + '例如 langgraph') || '').trim();
+  if (!slug) return;
+  if (!/^[a-z0-9-]+$/.test(slug)) { msg('标识只能用小写字母、数字、连字符', 'err'); return; }
+
+  const title = (prompt('系列名称（中文，显示在导航和侧边栏）' + NL + '例如 拆解 LangGraph') || '').trim();
+  if (!title) return;
+
+  const intro = (prompt('一句话简介（显示在系列分类页）') || '').trim();
+  if (!intro) return;
+
+  const dir = 'docs/series/' + slug;
+  if (!confirm(
+    '将创建系列：' + title + NL + '网址：/series/' + slug + '/' + NL + NL +
+    '一次提交会改动三个文件：' + NL +
+    '  ' + dir + '/index.md（新建）' + NL +
+    '  docs/series/index.md（加一节介绍）' + NL +
+    '  docs/.vitepress/config.ts（加导航与侧边栏）' + NL + NL + '继续？'
+  )) return;
+
+  msg('创建中…');
+  try {
+    const [cfg, seriesIndex] = await Promise.all([
+      getFileText('docs/.vitepress/config.ts'),
+      getFileText('docs/series/index.md'),
+    ]);
+
+    if (cfg.indexOf('/series/' + slug + '/') !== -1) {
+      msg('这个标识已经存在了', 'err'); return;
+    }
+    for (const [name, text, anchor] of [
+      ['config.ts 导航', cfg, NAV_ANCHOR],
+      ['config.ts 侧边栏', cfg, SIDEBAR_ANCHOR],
+      ['series/index.md 介绍', seriesIndex, INTRO_ANCHOR],
+    ]) {
+      if (text.indexOf(anchor) === -1) {
+        msg('找不到锚点（' + name + '），可能被删了 —— 请手动加回 ' + anchor, 'err');
+        return;
+      }
+    }
+
+    // 锚点前已有缩进，首行不再自带，否则会多一层
+    const navLine = "{ text: '" + title + "', link: '/series/" + slug + "/' },";
+    const newCfg1 = cfg.replace(NAV_ANCHOR, navLine + NL + '  ' + NAV_ANCHOR);
+
+    const sidebarBlock =
+      "'/series/" + slug + "/': [" + NL +
+      '        {' + NL +
+      "          text: '" + title + "'," + NL +
+      "          items: [{ text: '总览', link: '/series/" + slug + "/' }]," + NL +
+      '        },' + NL +
+      '        {' + NL +
+      "          text: '学习路线'," + NL +
+      '          // 写完一篇，给对应那项补上 link' + NL +
+      '          items: [' + NL +
+      "            { text: '01 · 待定' }," + NL +
+      '          ],' + NL +
+      '        },' + NL +
+      '      ],' + NL;
+    const newCfg = newCfg1.replace(SIDEBAR_ANCHOR, sidebarBlock + NL + '      ' + SIDEBAR_ANCHOR);
+
+    const balance = checkBalance(newCfg);
+    if (!balance.ok) { msg('生成的 config 括号不平衡（' + balance.msg + '），已中止', 'err'); return; }
+
+    const introBlock =
+      '## ' + title + NL + NL + intro + NL + NL +
+      '[进入系列 →](/series/' + slug + '/)' + NL;
+    const newIndex = seriesIndex.replace(INTRO_ANCHOR, introBlock + NL + INTRO_ANCHOR);
+
+    const doc =
+      '# ' + title + NL + NL + intro + NL + NL +
+      '## 学习路线' + NL + NL +
+      '| # | 主题 | 源码落点 | 笔记 | 状态 |' + NL +
+      '|---|------|---------|------|------|' + NL +
+      '| 1 | 待定 | 待定 | — | 🔲 |' + NL + NL +
+      '状态图例：🔲 未开始 ｜ 🚧 进行中 ｜ ✅ 读完并能讲出来' + NL + NL +
+      '## 我给自己定的规矩' + NL + NL +
+      '1. 一次只推进一级，不跳级。' + NL +
+      '2. 结业标准：能用大白话讲给不懂技术的人听，而不是「看过了」。' + NL +
+      '3. 笔记里必须有我自己推错的地方 —— 错的过程比对的结论值钱。' + NL;
+
+    const docPath = dir + '/index.md';
+    const shas = await commitFiles('新建系列：' + title, [
+      { path: docPath, content: doc },
+      { path: 'docs/series/index.md', content: newIndex },
+      { path: 'docs/.vitepress/config.ts', content: newCfg },
+    ]);
+
+    current = { path: docPath, sha: shas[docPath] };
+    $('editor').value = doc;
+    $('path').textContent = docPath;
+    $('saveBtn').disabled = false;
+    $('renameBtn').disabled = false;
+    msg('系列已创建，已为你打开总览页，可以直接改', 'ok');
+    loadList();
+  } catch (e) {
+    msg('创建失败：' + e.message, 'err');
+  }
+}
+
 async function rename() {
   if (!current || !current.sha) { msg('新文件先提交一次才能改名', 'err'); return; }
 
@@ -311,56 +475,16 @@ ${newPath}
   $('renameBtn').disabled = true;
   msg('改名中…');
   try {
-    // Contents API 没有 rename，用 Git Data API 改树，一次提交搞定。
-    // 顺带把编辑器里的当前内容一起提交，等于「改名 + 保存」。
-    const blob = await api(`/repos/${OWNER}/${REPO}/git/blobs`, {
-      method: 'POST',
-      body: JSON.stringify({ content: toB64($('editor').value), encoding: 'base64' }),
-    });
+    // 顺带把编辑器里的当前内容一起提交，等于「改名 + 保存」
+    const shas = await commitFiles(
+      `改名 ${DOL}{oldPath.replace(/^docs[/]/, '')} -> ${DOL}{newPath.replace(/^docs[/]/, '')}`,
+      [
+        { path: newPath, content: $('editor').value },
+        { path: oldPath, del: true },
+      ]
+    );
 
-    // 分支可能在这期间被别处推进（本地 push、GitHub 网页编辑），
-    // 那样 PATCH 会 422 not a fast forward。重读最新指针再来一次即可。
-    const commitRename = async () => {
-      const ref = await api(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
-      const parent = ref.object.sha;
-      const parentCommit = await api(`/repos/${OWNER}/${REPO}/git/commits/${parent}`);
-
-      // sha: null 表示从树里删掉这个路径
-      const tree = await api(`/repos/${OWNER}/${REPO}/git/trees`, {
-        method: 'POST',
-        body: JSON.stringify({
-          base_tree: parentCommit.tree.sha,
-          tree: [
-            { path: newPath, mode: '100644', type: 'blob', sha: blob.sha },
-            { path: oldPath, mode: '100644', type: 'blob', sha: null },
-          ],
-        }),
-      });
-
-      const commit = await api(`/repos/${OWNER}/${REPO}/git/commits`, {
-        method: 'POST',
-        body: JSON.stringify({
-          message: `改名 ${oldPath.replace(/^docs\//, '')} -> ${newPath.replace(/^docs\//, '')}`,
-          tree: tree.sha,
-          parents: [parent],
-        }),
-      });
-
-      await api(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
-        method: 'PATCH',
-        body: JSON.stringify({ sha: commit.sha }),
-      });
-    };
-
-    try {
-      await commitRename();
-    } catch (err) {
-      if (!err.message.startsWith('422')) throw err;
-      msg('分支已被更新，重试中…');
-      await commitRename();
-    }
-
-    current = { path: newPath, sha: blob.sha };
+    current = { path: newPath, sha: shas[newPath] };
     $('path').textContent = newPath;
     msg('已改名并提交，约 1 分钟后线上生效', 'ok');
     loadList();
