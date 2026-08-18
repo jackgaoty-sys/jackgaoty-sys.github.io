@@ -2,16 +2,52 @@
 
 不成系列的短文。踩过的坑、想明白的问题、工具链上的小结论。
 
-::: tip 还没开始写
-第一篇在路上。成系列的内容在 [拆解 Pi Agent](/pi/)。
-:::
+<script setup>
+import { data as posts } from './posts.data.ts'
+</script>
+
+<div v-if="!posts.length" class="tip custom-block">
+  <p class="custom-block-title">还没开始写</p>
+  <p>第一篇在路上。成系列的内容在 <a href="/pi/">拆解 Pi Agent</a>。</p>
+</div>
+
+<ul v-else class="post-list">
+  <li v-for="p in posts" :key="p.url">
+    <a :href="p.url">{{ p.title }}</a>
+    <span v-if="p.date" class="post-date">{{ p.date }}</span>
+    <p v-if="p.summary" class="post-summary">{{ p.summary }}</p>
+  </li>
+</ul>
+
+<style scoped>
+.post-list { list-style: none; padding: 0; margin: 24px 0 0; }
+.post-list li {
+  padding: 16px 0;
+  border-top: 1px solid var(--vp-c-divider);
+}
+.post-list a { font-size: 1.05rem; font-weight: 600; }
+.post-date {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  color: var(--vp-c-text-3);
+  font-variant-numeric: tabular-nums;
+}
+.post-summary {
+  margin: 6px 0 0;
+  font-size: 0.9rem;
+  color: var(--vp-c-text-2);
+  line-height: 1.7;
+}
+</style>
 
 <!--
-加新文章的步骤：
+加文章只要在 docs/posts/ 下新建 md，第一行写 `# 标题`。
+列表和侧边栏都会自动出现，不用改 config.ts。
 
-1. 在 docs/posts/ 下建 md，比如 docs/posts/rag-chunking.md
-2. 在下面列出来
-3. docs/.vitepress/config.ts 的 sidebar['/posts/'] 里加一项
-
-以后文章多了可以换成自动生成列表，现在手写更省事。
+可选 frontmatter：
+---
+title: 覆盖标题
+date: 2026-08-17
+---
+有 date 的按时间倒序排在前面。
 -->

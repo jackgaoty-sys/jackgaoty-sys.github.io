@@ -1,4 +1,24 @@
 import { defineConfig } from 'vitepress'
+import fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+// 散篇的侧边栏在构建时扫目录生成 —— 新增文章不用改这个文件。
+// pi 系列不这么做：那是一条设计好的六级路线，包含还没写的条目，顺序也有讲究。
+const postsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../posts')
+
+function postSidebarItems() {
+  if (!fs.existsSync(postsDir)) return []
+  return fs
+    .readdirSync(postsDir)
+    .filter((f) => f.endsWith('.md') && f !== 'index.md')
+    .map((f) => {
+      const src = fs.readFileSync(path.join(postsDir, f), 'utf-8')
+      const heading = src.match(/^#\s+(.+)$/m)
+      const slug = f.replace(/\.md$/, '')
+      return { text: heading ? heading[1].trim() : slug, link: `/posts/${slug}` }
+    })
+}
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -53,8 +73,7 @@ export default defineConfig({
       '/posts/': [
         {
           text: '散篇',
-          // 每写一篇，在这里加一项
-          items: [{ text: '全部', link: '/posts/' }],
+          items: [{ text: '全部', link: '/posts/' }, ...postSidebarItems()],
         },
       ],
     },
