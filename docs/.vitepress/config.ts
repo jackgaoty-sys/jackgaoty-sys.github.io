@@ -40,6 +40,10 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
+  // 草稿不参与构建：没有网址、不进导航与列表、搜索也搜不到。
+  // 注意仓库是 public 的，草稿内容在 GitHub 上仍然可见 —— 只是站点上没有。
+  srcExclude: ['drafts/**', '**/drafts/**'],
+
   markdown: {
     // 单个回车即换行，符合直觉。
     // 前提是段落整段写在一行 —— 若把段落硬折成多行，每一折都会变成真换行。

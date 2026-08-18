@@ -57,6 +57,7 @@
     font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 6px;
     background: var(--err); color: #fff; vertical-align: 1px;
   }
+  aside .item .tag.draft { background: #b8860b; }
 
   section { flex: 1; display: flex; flex-direction: column; min-width: 0; }
   #path {
@@ -110,7 +111,7 @@
   <h1>写作台</h1>
   <button onclick="newFile()">新建</button>
   <button onclick="newSeries()">新建系列</button>
-  <button id="renameBtn" onclick="rename()" disabled>改名</button>
+  <button id="renameBtn" onclick="rename()" disabled>移动/改名</button>
   <button class="primary" id="saveBtn" onclick="save()" disabled>提交</button>
   <span id="msg"></span>
   <span class="spacer"></span>
@@ -159,6 +160,7 @@ function fromB64(b64) {
 }
 
 const isCode = p => /\.ts$/.test(p);
+const isDraft = p => p.indexOf('/drafts/') !== -1;  // 不参与构建，站点上没有网址
 
 // 提交 .ts 前的括号平衡检查。跳过字符串和注释，避免把 "{" 当成真括号。
 // 能拦住：漏闭合、多余的闭合、错配。拦不住：少逗号、拼错的 key —— 那些只能靠构建。
@@ -268,10 +270,10 @@ function renderNode(node, host, depth, prefix) {
     el.className = 'item' + (current && current.path === f.path ? ' active' : '');
     el.style.paddingLeft = (10 + depth * 13 + 12) + 'px';
     el.textContent = f.name;
-    if (isCode(f.path)) {
+    if (isCode(f.path) || isDraft(f.path)) {
       const tag = document.createElement('span');
-      tag.className = 'tag';
-      tag.textContent = '代码';
+      tag.className = 'tag' + (isDraft(f.path) ? ' draft' : '');
+      tag.textContent = isDraft(f.path) ? '草稿' : '代码';
       el.appendChild(tag);
     }
     el.title = f.path;
@@ -338,7 +340,11 @@ async function open(path, el) {
 }
 
 function newFile() {
-  const name = prompt('新文件路径（相对 docs/），例如 posts/rag-chunking.md');
+  const name = prompt(
+    '新文件路径（相对 docs/），例如：' + NL +
+    '  posts/rag-chunking.md（散篇）' + NL +
+    '  drafts/rag-chunking.md（草稿，不上线）'
+  );
   if (!name) return;
   const path = 'docs/' + name.replace(/^\/+/, '');
   if (!/\.(md|ts)$/.test(path)) { msg('只支持 .md 和 .ts', 'err'); return; }
@@ -522,7 +528,12 @@ async function rename() {
   if (!current || !current.sha) { msg('新文件先提交一次才能改名', 'err'); return; }
 
   const oldPath = current.path;
-  const input = prompt('新路径（相对 docs/）', oldPath.replace(/^docs\//, ''));
+  const input = prompt(
+    '新路径（相对 docs/）。改目录即为移动，例如：' + NL +
+    '  drafts/x.md  ->  posts/x.md（草稿发布）' + NL +
+    '  teardown/pi/x.md  ->  learn/pi/x.md（换分类）',
+    oldPath.replace(/^docs\//, '')
+  );
   if (!input) return;
   const newPath = 'docs/' + input.replace(/^\/+/, '');
   if (newPath === oldPath) return;
