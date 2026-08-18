@@ -361,7 +361,7 @@ async function commitFiles(message, files) {
       entries.push({ path: f.path, mode: '100644', type: 'blob', sha: null });
       continue;
     }
-    const b = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/blobs`, {
+    const b = await api(`/repos/${OWNER}/${REPO}/git/blobs`, {
       method: 'POST',
       body: JSON.stringify({ content: toB64(f.content), encoding: 'base64' }),
     });
@@ -371,18 +371,18 @@ async function commitFiles(message, files) {
   // 分支可能在这期间被别处推进（本地 push、GitHub 网页编辑），
   // 那样 PATCH 会 422 not a fast forward。重读最新指针再来一次即可。
   const doCommit = async () => {
-    const ref = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/ref/heads/${DOL}{BRANCH}`);
+    const ref = await api(`/repos/${OWNER}/${REPO}/git/ref/heads/${BRANCH}`);
     const parent = ref.object.sha;
-    const parentCommit = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/commits/${DOL}{parent}`);
-    const tree = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/trees`, {
+    const parentCommit = await api(`/repos/${OWNER}/${REPO}/git/commits/${parent}`);
+    const tree = await api(`/repos/${OWNER}/${REPO}/git/trees`, {
       method: 'POST',
       body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree: entries }),
     });
-    const commit = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/commits`, {
+    const commit = await api(`/repos/${OWNER}/${REPO}/git/commits`, {
       method: 'POST',
       body: JSON.stringify({ message, tree: tree.sha, parents: [parent] }),
     });
-    await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/git/refs/heads/${DOL}{BRANCH}`, {
+    await api(`/repos/${OWNER}/${REPO}/git/refs/heads/${BRANCH}`, {
       method: 'PATCH',
       body: JSON.stringify({ sha: commit.sha }),
     });
@@ -402,7 +402,7 @@ async function commitFiles(message, files) {
 }
 
 async function getFileText(path) {
-  const f = await api(`/repos/${DOL}{OWNER}/${DOL}{REPO}/contents/${DOL}{encodeURI(path)}?ref=${DOL}{BRANCH}`);
+  const f = await api(`/repos/${OWNER}/${REPO}/contents/${encodeURI(path)}?ref=${BRANCH}`);
   return fromB64(f.content);
 }
 
@@ -539,7 +539,7 @@ ${newPath}
   try {
     // 顺带把编辑器里的当前内容一起提交，等于「改名 + 保存」
     const shas = await commitFiles(
-      `改名 ${DOL}{oldPath.replace(/^docs[/]/, '')} -> ${DOL}{newPath.replace(/^docs[/]/, '')}`,
+      `改名 ${oldPath.replace(/^docs[/]/, '')} -> ${newPath.replace(/^docs[/]/, '')}`,
       [
         { path: newPath, content: $('editor').value },
         { path: oldPath, del: true },
