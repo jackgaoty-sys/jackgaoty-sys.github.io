@@ -3,21 +3,57 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-// 散篇的侧边栏在构建时扫目录生成 —— 新增文章不用改这个文件。
-// pi 系列不这么做：那是一条设计好的六级路线，包含还没写的条目，顺序也有讲究。
-const postsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../posts')
+const LF = String.fromCharCode(10)
+const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+
+function firstHeading(src: string, fallback: string) {
+  for (const line of src.split(LF)) {
+    if (line.startsWith('# ')) return line.slice(2).trim()
+  }
+  return fallback
+}
+
+// 取开头的连续数字，用来把「已写的文件」和「路线图占位项」对上号
+function leadNum(s: string) {
+  let out = ''
+  for (const c of s) {
+    if (c >= '0' && c <= '9') out += c
+    else break
+  }
+  return out
+}
+
+// 扫某个目录下真实存在的文章，按文件名排序
+function articlesIn(dirRel: string) {
+  const dir = path.resolve(docsDir, dirRel)
+  if (!fs.existsSync(dir)) return []
+  return fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith('.md') && f !== 'index.md')
+    .sort()
+    .map((f) => {
+      const slug = f.slice(0, -3)
+      const src = fs.readFileSync(path.join(dir, f), 'utf-8')
+      return { text: firstHeading(src, slug), link: '/' + dirRel + '/' + slug }
+    })
+}
+
+// 系列的路线图 = 已写的文章（自动扫出来）+ 还没写的占位项。
+// 占位项若已有同编号的文件，就不再重复显示。
+function roadmap(dirRel: string, pending: string[]) {
+  const written = articlesIn(dirRel)
+  const doneNums = new Set(
+    written.map((w) => leadNum(w.link.slice(w.link.lastIndexOf('/') + 1))).filter(Boolean)
+  )
+  const rest = pending.filter((t) => {
+    const n = leadNum(t)
+    return !n || !doneNums.has(n)
+  })
+  return [...written, ...rest.map((text) => ({ text }))]
+}
 
 function postSidebarItems() {
-  if (!fs.existsSync(postsDir)) return []
-  return fs
-    .readdirSync(postsDir)
-    .filter((f) => f.endsWith('.md') && f !== 'index.md')
-    .map((f) => {
-      const src = fs.readFileSync(path.join(postsDir, f), 'utf-8')
-      const heading = src.match(/^#\s+(.+)$/m)
-      const slug = f.replace(/\.md$/, '')
-      return { text: heading ? heading[1].trim() : slug, link: `/posts/${slug}` }
-    })
+  return articlesIn('posts')
 }
 
 // 两个顶级分类：源码拆解读别人的代码，学习路线是系统学一门东西。
@@ -91,15 +127,14 @@ export default defineConfig({
         },
         {
           text: '路线图',
-          // 写完一篇，给对应那项补上 link
-          items: [
-            { text: '01 · Agent 主循环' },
-            { text: '02 · 工具的定义与执行' },
-            { text: '03 · 上下文管理与压缩' },
-            { text: '04 · 多模型统一抽象' },
-            { text: '05 · 系统提示词与 Skills' },
-            { text: '06 · CLI 外壳怎么包' },
-          ],
+          items: roadmap('teardown/pi', [
+            '01 · Agent 主循环',
+            '02 · 工具的定义与执行',
+            '03 · 上下文管理与压缩',
+            '04 · 多模型统一抽象',
+            '05 · 系统提示词与 Skills',
+            '06 · CLI 外壳怎么包',
+          ]),
         },
       ],
 
@@ -119,9 +154,7 @@ export default defineConfig({
         },
         {
           text: '路线图',
-          items: [
-            { text: '01 · 待定' },
-          ],
+          items: roadmap('learn/agentic-system-design', ['01 · 待定']),
         },
       ],
 
