@@ -8,9 +8,9 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
-  // 默认深色。用户点右上角开关仍可切浅色，选择会记在他自己的 localStorage 里。
-  // （'force-dark' 是锁死深色并隐藏开关，不用那个。）
-  appearance: 'dark',
+  // 强制深色：忽略访客 localStorage 里存过的旧偏好，右上角主题开关会隐藏。
+  // 想恢复开关就改回 'dark'。
+  appearance: 'force-dark',
 
   themeConfig: {
     siteTitle: 'TAT 的技术笔记',
