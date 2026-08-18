@@ -47,6 +47,12 @@
   }
   aside .item:hover { background: var(--panel); }
   aside .item.active { background: var(--panel); color: var(--brand); font-weight: 600; }
+  aside .item.dir {
+    color: var(--dim);
+    font-weight: 600;
+    user-select: none;
+  }
+  aside .item.dir .caret { display: inline-block; width: 12px; }
   aside .item .tag {
     font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 6px;
     background: var(--err); color: #fff; vertical-align: 1px;
@@ -229,6 +235,76 @@ function logout() {
   location.reload();
 }
 
+let allFiles = [];
+const collapsed = new Set(); // 折叠的目录
+
+const stripDocs = p => (p.startsWith('docs/') ? p.slice(5) : p);
+
+// 目录排序：内容目录在前，.vitepress 这种配置放最后
+function dirOrder(a, b) {
+  if (a === '.vitepress') return 1;
+  if (b === '.vitepress') return -1;
+  return a.localeCompare(b, 'zh');
+}
+
+function buildTree(paths) {
+  const root = { dirs: new Map(), files: [] };
+  for (const full of paths) {
+    const parts = stripDocs(full).split('/');
+    let node = root;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!node.dirs.has(parts[i])) node.dirs.set(parts[i], { dirs: new Map(), files: [] });
+      node = node.dirs.get(parts[i]);
+    }
+    node.files.push({ name: parts[parts.length - 1], path: full });
+  }
+  return root;
+}
+
+// 每层先文件后目录：首页、关于这些常改的在最上面，配置目录钉在最末。
+function renderNode(node, host, depth, prefix) {
+  node.files.sort((a, b) => a.name.localeCompare(b.name, 'zh')).forEach((f) => {
+    const el = document.createElement('div');
+    el.className = 'item' + (current && current.path === f.path ? ' active' : '');
+    el.style.paddingLeft = (10 + depth * 13 + 12) + 'px';
+    el.textContent = f.name;
+    if (isCode(f.path)) {
+      const tag = document.createElement('span');
+      tag.className = 'tag';
+      tag.textContent = '代码';
+      el.appendChild(tag);
+    }
+    el.title = f.path;
+    el.onclick = () => open(f.path, el);
+    host.appendChild(el);
+  });
+
+  for (const name of [...node.dirs.keys()].sort(dirOrder)) {
+    const key = prefix + name + '/';
+    const isClosed = collapsed.has(key);
+    const el = document.createElement('div');
+    el.className = 'item dir';
+    el.style.paddingLeft = (10 + depth * 13) + 'px';
+    const caret = document.createElement('span');
+    caret.className = 'caret';
+    caret.textContent = isClosed ? '▸' : '▾';
+    el.appendChild(caret);
+    el.appendChild(document.createTextNode(name));
+    el.onclick = () => {
+      if (isClosed) collapsed.delete(key); else collapsed.add(key);
+      renderList();
+    };
+    host.appendChild(el);
+    if (!isClosed) renderNode(node.dirs.get(name), host, depth + 1, key);
+  }
+}
+
+function renderList() {
+  const host = $('list');
+  host.innerHTML = '';
+  renderNode(buildTree(allFiles), host, 0, '');
+}
+
 async function loadList() {
   msg('读取文件列表…');
   try {
@@ -237,21 +313,8 @@ async function loadList() {
       .filter(n => n.type === 'blob' && n.path.startsWith('docs/') && /\.(md|ts)$/.test(n.path))
       .map(n => n.path)
       .sort();
-    $('list').innerHTML = '';
-    files.forEach(p => {
-      const el = document.createElement('div');
-      el.className = 'item';
-      el.textContent = p.replace(/^docs\//, '');
-      if (isCode(p)) {
-        const tag = document.createElement('span');
-        tag.className = 'tag';
-        tag.textContent = '代码';
-        el.appendChild(tag);
-      }
-      el.title = p;
-      el.onclick = () => open(p, el);
-      $('list').appendChild(el);
-    });
+    allFiles = files;
+    renderList();
     msg(files.length + ' 个文件', 'ok');
   } catch (e) {
     msg('读取失败：' + e.message, 'err');
@@ -267,8 +330,7 @@ async function open(path, el) {
     $('path').textContent = path;
     $('saveBtn').disabled = false;
     $('renameBtn').disabled = false;
-    document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
-    if (el) el.classList.add('active');
+    renderList(); // 重渲染以更新高亮，折叠状态保持不变
     msg('');
   } catch (e) {
     msg('打开失败：' + e.message, 'err');
@@ -285,7 +347,7 @@ function newFile() {
   $('path').textContent = path + '（新文件，提交后才存在）';
   $('saveBtn').disabled = false;
   $('renameBtn').disabled = true; // 还没有 blob，改名无从谈起
-  document.querySelectorAll('.item').forEach(n => n.classList.remove('active'));
+  renderList();
   $('editor').focus();
 }
 
