@@ -24,6 +24,7 @@ function postSidebarItems() {
 // 导航永远只有 4 项，加多少系列都不会撑爆 —— 新系列在这里加一行即可。
 const series = [
   { text: '拆解 Pi Agent', link: '/series/pi/' },
+  { text: 'Agent系统设计', link: '/series/agentic-system-design/' },
   // @新系列-导航（写作台按此锚点插入，勿删）
 ]
 
@@ -90,6 +91,20 @@ export default defineConfig({
             { text: '04 · 多模型统一抽象' },
             { text: '05 · 系统提示词与 Skills' },
             { text: '06 · CLI 外壳怎么包' },
+          ],
+        },
+      ],
+
+      '/series/agentic-system-design/': [
+        {
+          text: 'Agent系统设计',
+          items: [{ text: '总览', link: '/series/agentic-system-design/' }],
+        },
+        {
+          text: '学习路线',
+          // 写完一篇，给对应那项补上 link
+          items: [
+            { text: '01 · 待定' },
           ],
         },
       ],
