@@ -8,7 +8,7 @@ import { data as posts } from './posts.data.ts'
 
 <div v-if="!posts.length" class="tip custom-block">
   <p class="custom-block-title">还没开始写</p>
-  <p>第一篇在路上。成系列的内容在 <a href="/pi/">拆解 Pi Agent</a>。</p>
+  <p>第一篇在路上。成系列的内容在 <a href="/series/pi/">拆解 Pi Agent</a>。</p>
 </div>
 
 <ul v-else class="post-list">

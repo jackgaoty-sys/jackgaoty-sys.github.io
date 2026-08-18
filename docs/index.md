@@ -9,7 +9,7 @@ hero:
 features:
   - title: 拆解 Pi Agent
     details: 一个真实的 TypeScript Agent 框架，从主循环、工具执行、上下文压缩到多模型抽象，六级路线逐层读下来。
-    link: /pi/
+    link: /series/pi/
     linkText: 进入系列
   - title: 散篇
     details: 不成系列的短文：踩过的坑、想明白的问题、工具链上的小结论。

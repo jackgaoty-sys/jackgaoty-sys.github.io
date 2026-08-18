@@ -20,16 +20,11 @@ function postSidebarItems() {
     })
 }
 
-// 每拆一个新项目，只在这里加一行。
-// 一个系列时导航显示为普通链接，两个以上自动折成下拉 —— 导航栏永远只有 4 项。
+// 「系列」是分类，具体项目是它下面的内容。
+// 导航永远只有 4 项，加多少系列都不会撑爆 —— 新系列在这里加一行即可。
 const series = [
-  { text: 'Pi Agent', link: '/pi/' },
+  { text: '拆解 Pi Agent', link: '/series/pi/' },
 ]
-
-const seriesNav =
-  series.length === 1
-    ? { text: '拆解 ' + series[0].text, link: series[0].link }
-    : { text: '拆解', items: series }
 
 export default defineConfig({
   lang: 'zh-CN',
@@ -61,7 +56,7 @@ export default defineConfig({
 
     nav: [
       { text: '首页', link: '/' },
-      seriesNav,
+      { text: '系列', link: '/series/' },
       { text: '散篇', link: '/posts/' },
       { text: '关于', link: '/about' },
     ],
@@ -69,10 +64,20 @@ export default defineConfig({
     // 按目录配侧边栏：每个系列一套，互不干扰。
     // 以后加系列 = 建目录 + 在这里加一段。
     sidebar: {
-      '/pi/': [
+      // 分类页：列出所有系列
+      '/series/': [
+        {
+          text: '系列',
+          items: [{ text: '全部', link: '/series/' }, ...series],
+        },
+      ],
+
+      // 每个系列有自己的路线图侧边栏。注意这条要排在 '/series/' 之后，
+      // VitePress 取最长匹配前缀，所以进到 pi 里会用下面这套。
+      '/series/pi/': [
         {
           text: '拆解 Pi Agent',
-          items: [{ text: '总览 · 仓库地图与路线', link: '/pi/' }],
+          items: [{ text: '总览 · 仓库地图与路线', link: '/series/pi/' }],
         },
         {
           text: '学习路线',
