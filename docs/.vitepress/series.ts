@@ -54,13 +54,11 @@ export interface RoadmapItem {
 
 /**
  * 合并「已写的文章」和「还没写的占位项」。
- * 占位项若已有同编号的文章就不再显示 —— 编号可以写在标题里（01. xxx）
- * 也可以写在文件名里（01-xxx.md），两者取到哪个算哪个。
+ * 占位项若已有同编号的文章就不再显示 —— 编号只认文件名（01-xxx.md），
+ * 标题里写什么都不影响匹配。
  */
 export function mergeRoadmap(written: RoadmapItem[], pending: string[]): RoadmapItem[] {
   const numOf = (it: RoadmapItem) => {
-    const fromTitle = leadNum(it.title)
-    if (fromTitle) return fromTitle
     const link = it.link || ''
     return leadNum(link.slice(link.lastIndexOf('/') + 1))
   }
