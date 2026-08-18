@@ -20,6 +20,17 @@ function postSidebarItems() {
     })
 }
 
+// 每拆一个新项目，只在这里加一行。
+// 一个系列时导航显示为普通链接，两个以上自动折成下拉 —— 导航栏永远只有 4 项。
+const series = [
+  { text: 'Pi Agent', link: '/pi/' },
+]
+
+const seriesNav =
+  series.length === 1
+    ? { text: '拆解 ' + series[0].text, link: series[0].link }
+    : { text: '拆解', items: series }
+
 export default defineConfig({
   lang: 'zh-CN',
   title: 'TAT 的技术笔记',
@@ -50,7 +61,7 @@ export default defineConfig({
 
     nav: [
       { text: '首页', link: '/' },
-      { text: '拆解 Pi Agent', link: '/pi/' },
+      seriesNav,
       { text: '散篇', link: '/posts/' },
       { text: '关于', link: '/about' },
     ],
