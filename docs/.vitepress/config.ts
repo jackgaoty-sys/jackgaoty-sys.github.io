@@ -8,9 +8,15 @@ export default defineConfig({
   cleanUrls: true,
   lastUpdated: true,
 
-  // 强制深色：忽略访客 localStorage 里存过的旧偏好，右上角主题开关会隐藏。
-  // 想恢复开关就改回 'dark'。
-  appearance: 'force-dark',
+  // 每次访问默认深色，但右上角开关保留可用。
+  // 'dark' 只在「没存过偏好」时生效，所以配合下面 head 里的清除脚本：
+  // 每次加载先抹掉存的偏好，VitePress 就会重新落回深色默认。
+  appearance: 'dark',
+
+  head: [
+    // 必须在 VitePress 自己的主题脚本之前跑，否则这次加载已经按旧偏好渲染完了
+    ['script', {}, "try{localStorage.removeItem('vitepress-theme-appearance')}catch(e){}"],
+  ],
 
   themeConfig: {
     siteTitle: 'TAT 的技术笔记',
