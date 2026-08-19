@@ -156,7 +156,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: '内容为个人学习笔记，引用的源码版权归各自作者',
+      message: '内容为个人学习笔记，引用的源码均为开源',
       copyright: '© 2026 TAT',
     },
   },
