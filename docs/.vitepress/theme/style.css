@@ -3,6 +3,20 @@
    这里改成居中，把整个宽度用满。
    --------------------------------------------------------------- */
 
+/* 默认 hero 上下内边距合计 208px，比引语本身还高，把首屏挤没了。
+   压到 112px，正文「我在写什么」就能抬到折线以上。 */
+.VPHero {
+  padding-top: 72px;
+  padding-bottom: 40px;
+}
+
+@media (min-width: 960px) {
+  .VPHero {
+    padding-top: 72px;
+    padding-bottom: 40px;
+  }
+}
+
 .VPHero .container {
   flex-direction: column;
   align-items: center; /* 列向 flex：这条才是把 .main 整块摆到页面中线上的 */
@@ -57,7 +71,7 @@
 
 @media (min-width: 960px) {
   .VPHero .text {
-    font-size: 2.4rem;
+    font-size: 2.05rem;
   }
 }
 
