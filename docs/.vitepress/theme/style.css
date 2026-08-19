@@ -4,17 +4,12 @@
    --------------------------------------------------------------- */
 
 /* 默认 hero 上下内边距合计 208px，比引语本身还高，把首屏挤没了。
-   压到 112px，正文「我在写什么」就能抬到折线以上。 */
-.VPHero {
-  padding-top: 72px;
+   注意上内边距里含一份导航栏高度 —— hero 用负外边距顶到导航下面，
+   直接写死会让正文钻进导航栏。所以保留 nav-height，只压它之外的那部分。
+   VitePress 用 .VPHero[data-v-xxx]（权重 0,2,0），这里用 .VPHome .VPHero 打平并靠后覆盖。 */
+.VPHome .VPHero {
+  padding-top: calc(var(--vp-nav-height) + 40px);
   padding-bottom: 40px;
-}
-
-@media (min-width: 960px) {
-  .VPHero {
-    padding-top: 72px;
-    padding-bottom: 40px;
-  }
 }
 
 .VPHero .container {
