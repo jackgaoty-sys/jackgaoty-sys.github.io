@@ -116,7 +116,7 @@ export default defineConfig({
 
       '/learn/': [
         {
-          text: '学习路线',
+          text: '技术笔记',
           items: [{ text: '全部', link: '/learn/' }, ...navOf('learn')],
         },
       ],
