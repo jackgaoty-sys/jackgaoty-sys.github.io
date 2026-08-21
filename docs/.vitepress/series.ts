@@ -31,6 +31,12 @@ export const SERIES: SeriesDef[] = [
     category: 'learn',
     pending: ['01 · 待定'],
   },
+  {
+    dir: 'teardown/transformer',
+    title: 'Transformer',
+    category: 'teardown',
+    pending: ['01 · 待定'],
+  },
   // @新系列-定义（写作台按此锚点插入，勿删）
 ]
 
