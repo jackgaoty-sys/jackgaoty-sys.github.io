@@ -80,6 +80,12 @@
   #setup p { color: var(--dim); font-size: 13px; }
   #setup ol { color: var(--dim); font-size: 13px; padding-left: 20px; }
   #setup code { background: var(--panel); padding: 1px 5px; border-radius: 3px; font-size: 12px; }
+  #setup .authNote {
+    background: rgba(255, 102, 102, .14);
+    border: 1px solid var(--err);
+    color: var(--err);
+    padding: 8px 12px; border-radius: 6px; font-size: 13px; margin: 0 0 4px;
+  }
   #setup input {
     width: 100%; padding: 9px 12px; margin: 12px 0;
     border: 1px solid var(--border); border-radius: 6px;
@@ -102,6 +108,7 @@
       <li>生成后粘到下面</li>
     </ol>
     <p>务必用 fine-grained token 并且只授权这一个仓库。这样即使 token 泄漏，能被改的也只有这个博客。</p>
+    <p id="authNote" class="authNote" style="display:none"></p>
     <input id="token" type="password" placeholder="github_pat_..." autocomplete="off">
     <button class="primary" onclick="saveToken()">保存并进入</button>
   </div>
@@ -218,9 +225,22 @@ async function api(path, options = {}) {
   if (!res.ok) {
     let detail = res.statusText;
     try { detail = (await res.json()).message || detail; } catch {}
+    // token 失效时不要只在角落报一行红字 —— 那看起来就像「没反应」。
+    // 直接退回登录页，让人一眼知道要重新粘 token。
+    if (res.status === 401) requireLogin('登录已失效，请重新粘一个有效的 token');
     throw new Error(res.status + ' ' + detail);
   }
   return res.json();
+}
+
+function requireLogin(reason) {
+  localStorage.removeItem('gh_token');
+  token = '';
+  $('authNote').textContent = reason || '';
+  $('authNote').style.display = reason ? 'block' : 'none';
+  $('token').value = '';
+  $('setup').style.display = 'flex';
+  $('list').innerHTML = '';
 }
 
 function saveToken() {
