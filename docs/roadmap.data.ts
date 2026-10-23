@@ -12,13 +12,13 @@ export interface RoadmapRow {
 }
 
 // 扫所有系列目录下的文章，和 series.ts 里的 pending 合并成每个系列的路线图。
-export default createContentLoader(['teardown/*/*.md', 'learn/*/*.md'], {
+export default createContentLoader(['dump/*/*.md'], {
   includeSrc: true,
   transform(raw): Record<string, RoadmapRow[]> {
     const written: Record<string, (RoadmapRow & { slug: string })[]> = {}
 
     for (const page of raw) {
-      // url 形如 /teardown/pi/01-agent-loop；总览页是 /teardown/pi/，段数不足，跳过
+      // url 形如 /dump/pi/01-agent-loop；总览页是 /dump/pi/，段数不足，跳过
       const parts = page.url.split('/').filter(Boolean)
       if (parts.length < 3) continue
       const dir = parts[0] + '/' + parts[1]

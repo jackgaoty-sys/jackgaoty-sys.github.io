@@ -1,108 +1,120 @@
 /* ---------------------------------------------------------------
-   首页 hero：默认主题是「左文字 + 右图」布局，不给图右半边就空着。
-   这里改成居中，把整个宽度用满。
+   沙箱逃逸.log 的视觉基调：取自头像 —— 近黑底 + 终端绿，
+   正文用系统中文字体，所有「机器味」的东西（导航、编号、日期、命令）用等宽。
+   三个频道各一种颜色，组件里用 .c-trace / .c-dump / .c-escape 取 --sx-c。
    --------------------------------------------------------------- */
 
-/* 默认 hero 上下内边距合计 208px，比引语本身还高，把首屏挤没了。
-   注意上内边距里含一份导航栏高度 —— hero 用负外边距顶到导航下面，
-   直接写死会让正文钻进导航栏。所以保留 nav-height，只压它之外的那部分。
-   VitePress 用 .VPHero[data-v-xxx]（权重 0,2,0），这里用 .VPHome .VPHero 打平并靠后覆盖。 */
-.VPHome .VPHero {
-  padding-top: calc(var(--vp-nav-height) + 40px);
-  padding-bottom: 40px;
+:root {
+  --sx-green-1: #1fae72;
+  --sx-green-2: #2ea876;
+  --sx-green-3: #3f8f6c;
+  --sx-green-4: #a9d8c0;
+
+  --c-trace: #1f78b4;
+  --c-dump: #11804f;
+  --c-escape: #c2522f;
+
+  --sx-term-bg: #f4f5f0;
+  --sx-glow: rgba(17, 128, 79, 0.25);
+
+  --vp-c-bg: #fbfbf8;
+  --vp-c-bg-alt: #f3f4ef;
+  --vp-c-bg-soft: #eef0ea;
+  --vp-c-bg-elv: #ffffff;
+  --vp-c-divider: #e1e4dc;
+  --vp-c-gutter: #e8eae4;
+  --vp-c-text-1: #15191e;
+  --vp-c-text-2: #4e5966;
+  --vp-c-text-3: #8a939c;
+
+  --vp-c-brand-1: #11804f;
+  --vp-c-brand-2: #169a61;
+  --vp-c-brand-3: #1daf6f;
+  --vp-c-brand-soft: rgba(17, 128, 79, 0.1);
+
+  --vp-font-family-base: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei',
+    'Noto Sans SC', 'Segoe UI', sans-serif;
+  --vp-font-family-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --vp-home-hero-name-color: var(--vp-c-brand-1);
 }
 
-.VPHero .container {
-  flex-direction: column;
-  align-items: center; /* 列向 flex：这条才是把 .main 整块摆到页面中线上的 */
-  text-align: center;
+.dark {
+  --sx-green-1: #3ddc97;
+  --sx-green-2: #2ea876;
+  --sx-green-3: #277a5a;
+  --sx-green-4: #1b4536;
+
+  --c-trace: #5cc8ff;
+  --c-dump: #3ddc97;
+  --c-escape: #ff9e64;
+
+  --sx-term-bg: #0a0d11;
+  --sx-glow: rgba(61, 220, 151, 0.18);
+
+  --vp-c-bg: #0e1116;
+  --vp-c-bg-alt: #0a0d11;
+  --vp-c-bg-soft: #151a21;
+  --vp-c-bg-elv: #12161c;
+  --vp-c-divider: #222932;
+  --vp-c-gutter: #070a0d;
+  --vp-c-text-1: #d7dee5;
+  --vp-c-text-2: #8e9aa6;
+  --vp-c-text-3: #5d6974;
+
+  --vp-c-brand-1: #3ddc97;
+  --vp-c-brand-2: #34c486;
+  --vp-c-brand-3: #2ea876;
+  --vp-c-brand-soft: rgba(61, 220, 151, 0.14);
+
+  --vp-code-block-bg: #0a0d11;
 }
 
-.VPHero .main {
-  max-width: 100%;
-  width: 100%;
-  order: 2;
-}
+.c-trace { --sx-c: var(--c-trace); }
+.c-dump { --sx-c: var(--c-dump); }
+.c-escape { --sx-c: var(--c-escape); }
 
-.VPHero .actions {
-  justify-content: center;
-}
-
-/* .name / .text 是收缩宽度的块元素，text-align 只能居中它们内部的文字，
-   居中元素本身要靠 auto 外边距 */
-.VPHero .name,
-.VPHero .text {
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* 名字退成小字辅助行，标语当主角 —— 拉开层级，别打架 */
-.VPHero .name {
-  font-size: 1.5rem;
-  line-height: 1.6;
-  letter-spacing: 0.18em;
-  font-weight: 600;
-  -webkit-text-fill-color: currentColor;
-  background: none;
-  color: var(--vp-c-text-3);
-}
-
-/* 标题放的是一句引言，不是短标语 —— 字号压下来，长句才不会糊满整屏 */
-.VPHero .text {
-  font-size: 1.9rem;
-  line-height: 1.4;
-  max-width: 46rem;
-  font-weight: 600;
-}
-
-/* 引言的出处，退一档 */
-.VPHero .tagline {
-  max-width: 34rem;
-  margin: 1.4rem auto 0;
-  font-size: 0.95rem;
-  line-height: 1.8;
-  color: var(--vp-c-text-3);
-}
-
-@media (min-width: 960px) {
-  .VPHero .text {
-    font-size: 2.05rem;
-  }
-}
-
-@media (max-width: 640px) {
-  .VPHero .text {
-    font-size: 1.5rem;
-  }
-  .VPHero .name {
-    font-size: 1.15rem;
-  }
-}
+::selection { background: var(--vp-c-brand-soft); }
 
 /* ---------------------------------------------------------------
-   首页卡片：默认边框太弱，加个悬停反馈，密度也提一点
+   导航：站名和菜单都走等宽，像一条命令行
    --------------------------------------------------------------- */
 
-.VPFeature {
-  transition: border-color 0.25s, transform 0.25s;
-}
-
-.VPFeature:hover {
-  border-color: var(--vp-c-brand-1);
-  transform: translateY(-2px);
-}
+.VPNavBarTitle .title { font-family: var(--vp-font-family-mono); font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.VPNavBarTitle .logo { height: 26px; }
+.VPNavBarMenuLink, .VPNavScreenMenuLink { font-family: var(--vp-font-family-mono); font-size: 13.5px; }
+.VPNavBar:not(.home.top) .divider-line { background-color: var(--vp-c-divider); }
 
 /* ---------------------------------------------------------------
-   正文：中文阅读优化
+   正文：中文阅读优化 + 一点 Markdown 原味
    --------------------------------------------------------------- */
 
 .vp-doc p,
-.vp-doc li {
-  line-height: 1.8;
+.vp-doc li { line-height: 1.85; }
+
+.vp-doc h1 { letter-spacing: -0.01em; }
+
+/* h2 前面挂一个淡淡的 ##，提醒这是一份 .md */
+.vp-doc h2 { border-top-color: var(--vp-c-divider); }
+.vp-doc h2::before {
+  content: '## ';
+  font-family: var(--vp-font-family-mono);
+  font-weight: 400;
+  color: var(--vp-c-text-3);
 }
 
+.vp-doc blockquote { border-left-color: var(--vp-c-brand-1); }
+.vp-doc blockquote > p { color: var(--vp-c-text-2); }
+
+.vp-doc a { text-underline-offset: 3px; }
+
 /* 表格撑满，别缩在左边 */
-.vp-doc table {
-  display: table;
-  width: 100%;
-}
+.vp-doc table { display: table; width: 100%; }
+.vp-doc th { font-family: var(--vp-font-family-mono); font-size: 12.5px; font-weight: 600; color: var(--vp-c-text-2); }
+
+.vp-doc :not(pre) > code { font-size: 0.86em; }
+
+/* 侧边栏的分组标题也走等宽 */
+.VPSidebarItem.level-0 > .item .text { font-family: var(--vp-font-family-mono); font-size: 13px; }
+
+.VPFooter { font-family: var(--vp-font-family-mono); font-size: 12px; }

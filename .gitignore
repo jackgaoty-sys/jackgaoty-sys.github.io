@@ -3,3 +3,8 @@ docs/.vitepress/dist/
 docs/.vitepress/cache/
 *.log
 .DS_Store
+
+# Obsidian：库的配置要进仓库，各自机器的窗口布局不进。
+# 插件整个不进：插件常把 API Key 明文存在 data.json 里，仓库是 public 的。换机器重装插件即可。
+docs/.obsidian/workspace*.json
+docs/.obsidian/plugins/
