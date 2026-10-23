@@ -10,7 +10,7 @@ const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 
 const SITE = '沙箱逃逸.log'
-const DESC = '读源码、拆项目、记踩坑；偶尔按一下 Esc。TAT 的技术博客。'
+const DESC = '给 Agent 造沙箱的人，偶尔也想按一下 Esc。TAT 的技术博客。'
 
 function firstHeading(src: string, fallback: string) {
   for (const line of src.split(LF)) {

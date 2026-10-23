@@ -169,7 +169,7 @@ function siteSvg() {
   <rect width="1200" height="630" fill="${C.bg}"/>
   <g transform="translate(40 35) scale(0.5)">${AVATAR}</g>
   ${brand(520, 300, 88)}
-  <text x="524" y="372" font-family="${SANS}" font-size="32" fill="${C.text2}">读源码、拆项目、记踩坑；偶尔按一下 Esc。</text>
+  <text x="524" y="372" font-family="${SANS}" font-size="32" fill="${C.text2}">给 Agent 造沙箱的人，偶尔也想按一下 Esc。</text>
   <text x="524" y="440" font-family="${MONO}" font-size="24" fill="${C.text3}"><tspan fill="${CH_COLOR.trace}">trace/</tspan>  <tspan fill="${CH_COLOR.dump}">dump/</tspan>  <tspan fill="${CH_COLOR.escape}">escape/</tspan></text>
 </svg>`
 }

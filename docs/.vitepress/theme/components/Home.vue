@@ -69,7 +69,7 @@ const lastLine = computed(() => (echoed.value ? 'echo' : subscribed.value ? 'sub
       <div class="hero-text">
         <h1 class="hero-title">沙箱逃逸<span class="ext">.log</span></h1>
         <p class="hero-tag">
-          读源码、拆项目、记踩坑；<span class="nowrap">偶尔按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="escape" @keydown.enter="escape">Esc</kbd>。</span>
+          给 Agent 造沙箱的人，<span class="nowrap">偶尔也想按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="escape" @keydown.enter="escape">Esc</kbd>。</span>
         </p>
       </div>
     </section>
