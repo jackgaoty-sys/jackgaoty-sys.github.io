@@ -84,6 +84,8 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#0e1116' }],
     ['meta', { property: 'og:site_name', content: SITE }],
     ['link', { rel: 'alternate', type: 'application/rss+xml', title: SITE, href: '/feed.xml' }],
+    // escape/ 解锁过的访客：首屏渲染前就挂上 class，免得先看到两个频道再闪成三个（见 theme/escape.ts）
+    ['script', {}, "try{if(localStorage.getItem('sx-escape')==='1')document.documentElement.classList.add('sx-unlocked')}catch(e){}"],
   ],
 
   // 每页的 og / twitter 信息和分享卡片图（构建时生成，见 og.ts）

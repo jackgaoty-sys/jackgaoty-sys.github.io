@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { data as log } from '../../../log.data'
 import { CHANNELS, pad, type Channel } from '../channels'
+import { unlocked } from '../escape'
 
 const props = defineProps<{
   /** 只看某个频道；不传就是全站，并显示频道筛选 */
@@ -10,18 +11,27 @@ const props = defineProps<{
   pinned?: boolean
   /** 首页用：接在终端的 tail -f 后面，条目一行行「打印」出来 */
   stream?: boolean
+  /** 首页用：escape/ 没解锁之前，它的筛选按钮和条目都不出现 */
+  hideLocked?: boolean
 }>()
 
+const locked = computed(() => !!props.hideLocked && !unlocked.value)
+const channels = computed(() => (locked.value ? CHANNELS.filter((c) => c !== 'escape') : CHANNELS))
+const visible = computed(() => (locked.value ? log.filter((e) => e.channel !== 'escape') : log))
+
 const active = ref<Channel | 'all'>(props.channel ?? 'all')
-const shown = computed(() => (active.value === 'all' ? log : log.filter((e) => e.channel === active.value)))
-const count = (c: Channel | 'all') => (c === 'all' ? log.length : log.filter((e) => e.channel === c).length)
+const shown = computed(() =>
+  active.value === 'all' ? visible.value : visible.value.filter((e) => e.channel === active.value)
+)
+const count = (c: Channel | 'all') =>
+  c === 'all' ? visible.value.length : visible.value.filter((e) => e.channel === c).length
 
 // 打印动画纯 CSS（服务端渲染出来就会播），这里只负责播完后摘掉 class，
 // 免得之后切换频道筛选时新出现的条目又排队等一遍
 const printing = ref(!!props.stream)
 const lead = computed(() => (props.pinned && active.value === 'all' ? 1 : 0))
 onMounted(() => {
-  if (printing.value) setTimeout(() => (printing.value = false), 1800 + (log.length + 3) * 140)
+  if (printing.value) setTimeout(() => (printing.value = false), 2050 + (log.length + 3) * 140)
   canPeek.value = matchMedia('(hover: hover) and (min-width: 960px)').matches
 })
 
@@ -52,7 +62,7 @@ function onPeekError() {
   <div class="sx-log" :class="{ printing }">
     <div v-if="!channel" class="tabs" role="tablist" aria-label="按频道筛选">
       <button
-        v-for="c in ['all', ...CHANNELS] as const"
+        v-for="c in ['all', ...channels] as const"
         :key="c"
         role="tab"
         :aria-selected="active === c"
@@ -176,9 +186,9 @@ function onPeekError() {
 }
 @keyframes sx-peek-in { from { opacity: 0; } }
 
-/* ---- tail -f：首页终端最后一行出现后（约 1.6s），条目从左往右一行行「打印」出来 ---- */
-.printing .tabs { animation: sx-fade 0.3s 1.55s both; }
-.printing .rows > li { animation: sx-print 0.42s calc(1.75s + var(--i) * 0.14s) steps(14, end) both; }
+/* ---- tail -f：首页终端最后一行出现后（约 1.8s），条目从左往右一行行「打印」出来 ---- */
+.printing .tabs { animation: sx-fade 0.3s 1.77s both; }
+.printing .rows > li { animation: sx-print 0.42s calc(1.97s + var(--i) * 0.14s) steps(14, end) both; }
 
 @keyframes sx-fade { from { opacity: 0; } }
 @keyframes sx-print {

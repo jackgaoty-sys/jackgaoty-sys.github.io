@@ -86,6 +86,15 @@
 .VPNavBarMenuLink, .VPNavScreenMenuLink { font-family: var(--vp-font-family-mono); font-size: 13.5px; }
 .VPNavBar:not(.home.top) .divider-line { background-color: var(--vp-c-divider); }
 
+/* escape/ 没解锁之前不出现在导航里（见 theme/escape.ts）；刚解锁的那一下淡入、闪一下橙色 */
+html:not(.sx-unlocked) .VPNavBarMenuLink[href='/escape/'],
+html:not(.sx-unlocked) .VPNavScreenMenuLink[href='/escape/'] { display: none; }
+html.sx-just-unlocked .VPNavBarMenuLink[href='/escape/'] { animation: sx-nav-in 1.2s 0.3s both; }
+@keyframes sx-nav-in {
+  0% { opacity: 0; }
+  30% { opacity: 1; color: var(--c-escape); }
+}
+
 /* ---------------------------------------------------------------
    正文：中文阅读优化 + 一点 Markdown 原味
    --------------------------------------------------------------- */

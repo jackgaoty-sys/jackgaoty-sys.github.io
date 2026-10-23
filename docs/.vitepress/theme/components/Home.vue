@@ -1,19 +1,34 @@
 <script setup lang="ts">
 import { data as log } from '../../../log.data'
 import { CHANNELS, CHANNEL_META } from '../channels'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import Avatar from './Avatar.vue'
 import LogList from './LogList.vue'
+import { unlock, unlocked } from '../escape'
 
 const count = (c: string) => log.filter((e) => e.channel === c).length
 
-// Esc 彩蛋：按 Esc（或点头像、点标语里的 Esc 键帽）——
-// 头像里的光标再逃一次，终端末尾安静地多出一行 cd ../escape。不遮屏、不弹提示。
+// Esc 彩蛋：escape/ 默认藏着，头像是一个封闭的沙箱，ls 里只列两个目录（但 total 3 —— 留给细心的人的提示）。
+// 按 Esc（或点头像、点标语里的 Esc 键帽）：
+// - 第一次：沙箱右上角被冲开，光标逃到框外、不再回来；ls 里 escape/ 那一行补出来；导航栏多出 escape；
+//   终端回显 ^[（真实终端里按 Esc 就是这么显示的）。
+// - 之后再按：光标在框外闪几下回应。
 const avatar = ref<InstanceType<typeof Avatar>>()
-const escaped = ref(false)
-function escape() {
-  avatar.value?.escape()
-  escaped.value = true
+const echoed = ref(false) // 终端里回显过 ^[
+const revealed = ref(false) // 这一次访问里刚解锁：escape/ 那一行用打字动画补出来
+async function escape() {
+  echoed.value = true
+  if (unlocked.value) {
+    avatar.value?.poke()
+    return
+  }
+  // 先让头像挂上「冲出去」的动画，等 DOM 更新完再解锁（给 <html> 加 class）——
+  // 两者同一帧生效，光标才是从框里冲出去，而不是先闪到框外再播动画
+  avatar.value?.breakOut()
+  revealed.value = true
+  await nextTick()
+  unlock()
+  document.documentElement.classList.add('sx-just-unlocked')
 }
 
 function onKey(e: KeyboardEvent) {
@@ -42,7 +57,7 @@ async function subscribe() {
 }
 
 // 闪烁光标只挂在终端最后一行上
-const lastLine = computed(() => (escaped.value ? 'esc' : subscribed.value ? 'sub' : 'tail'))
+const lastLine = computed(() => (echoed.value ? 'echo' : subscribed.value ? 'sub' : 'tail'))
 </script>
 
 <template>
@@ -67,20 +82,21 @@ const lastLine = computed(() => (escaped.value ? 'esc' : subscribed.value ? 'sub
           TAT · 写代码的，主要折腾 AI Agent 与系统工程 <a class="more" href="/about">cat about.md →</a>
         </p>
         <p class="ln" style="--d: 2"><span class="ps">$</span> ls -l channels/</p>
+        <p class="ln out" style="--d: 3">total {{ CHANNELS.length }}</p>
         <a
           v-for="(c, i) in CHANNELS"
           :key="c"
           class="ln out ch"
-          :class="'c-' + c"
+          :class="['c-' + c, { lock: c === 'escape', reveal: c === 'escape' && revealed }]"
           :href="'/' + c + '/'"
-          :style="{ '--d': 3 + i }"
+          :style="{ '--d': 4 + i }"
         >
           <span class="perm">drwxr-xr-x</span>
           <span class="cnt">{{ count(c) }}</span>
           <span class="name">{{ c }}/</span>
           <span class="desc"># {{ CHANNEL_META[c].desc }}</span>
         </a>
-        <button class="ln tail" type="button" style="--d: 6" title="订阅更新（RSS）" @click="subscribe">
+        <button class="ln tail" type="button" style="--d: 7" title="订阅更新（RSS）" @click="subscribe">
           <span class="ps">$</span> tail -f sandbox-escape.log<span v-if="lastLine === 'tail'" class="cursor" /><span class="hint">↵ 订阅</span>
         </button>
         <p v-if="subscribed" class="ln out sub">
@@ -88,14 +104,14 @@ const lastLine = computed(() => (escaped.value ? 'esc' : subscribed.value ? 'sub
           <template v-else>把这个地址粘贴到 RSS 阅读器：</template>
           <a :href="feedUrl" target="_blank" rel="noopener">{{ feedUrl }}</a><span v-if="lastLine === 'sub'" class="cursor" />
         </p>
-        <a v-if="escaped" class="ln esc-line" href="/escape/">
-          <span class="ps">$</span> cd ../escape <span class="desc"># 你按了 Esc</span><span class="cursor" />
-        </a>
+        <p v-if="echoed" class="ln echo" title="^[ 是终端里按下 Esc 键时的回显">
+          <span class="ps">$</span> ^[<span class="cursor" />
+        </p>
       </div>
     </section>
 
     <section class="feed">
-      <LogList pinned stream />
+      <LogList pinned stream hide-locked />
     </section>
   </div>
 </template>
@@ -182,19 +198,18 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
 .tail:hover .hint, .tail:focus-visible .hint { opacity: 1; color: var(--vp-c-brand-1); }
 .sub { white-space: normal; animation: none; }
 
-/* Esc 之后追加的那一行：像被敲出来一样从左往右出现，可点进 escape/ */
-.esc-line {
-  text-decoration: none; border-radius: 4px; margin: 0 -8px; padding: 0 8px;
-  animation: sx-type 0.45s 0.35s steps(18, end) both;
-  transition: background 0.15s;
-}
-.esc-line:hover { background: var(--vp-c-bg-soft); }
-.esc-line .desc { color: var(--vp-c-text-3); }
-.esc-line:hover .desc { color: var(--c-escape); }
+/* escape/ 刚解锁时像被敲出来一样补上，橙色底闪一下（没解锁时的隐藏规则在文件末尾的非 scoped 块里） */
+.reveal { animation: sx-type 0.45s 0.25s steps(18, end) both, sx-flash 1.8s 0.25s ease-out both; }
 @keyframes sx-type {
   from { clip-path: inset(0 100% 0 0); }
   to { clip-path: inset(0 0 0 0); }
 }
+@keyframes sx-flash {
+  0%, 35% { background: color-mix(in srgb, var(--c-escape) 18%, transparent); }
+}
+
+/* Esc 的回显 ^[ */
+.echo { animation: none; }
 .sub a { color: var(--vp-c-brand-1); word-break: break-all; }
 
 .cursor {
@@ -224,4 +239,10 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
   .wrap { white-space: normal; line-height: 1.7; padding: 3px 0; }
   .wrap .more { margin-left: 0; white-space: nowrap; }
 }
+</style>
+
+<style>
+/* escape/ 没解锁之前不在 ls 里（见 theme/escape.ts）。
+   挂在 <html class="sx-unlocked"> 上，所以不能放进 scoped 块 —— Vue 的 :global(a) b 会把 b 整个丢掉。 */
+html:not(.sx-unlocked) .sx-home .term .ch.lock { display: none; }
 </style>
