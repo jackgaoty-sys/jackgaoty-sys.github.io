@@ -8,6 +8,19 @@ import LogList from './LogList.vue'
 
 const count = (c: string) => log.filter((e) => e.channel === c).length
 const egg = ref<InstanceType<typeof EscapeEgg>>()
+
+// 点 tail -f 那一行 = 订阅：把 RSS 地址复制到剪贴板，终端里回显一行结果。
+// 剪贴板不可用（非 https、浏览器拒绝）时就把地址直接摆出来让人自己复制。
+const feedUrl = 'https://jackgaoty-sys.github.io/feed.xml'
+const subscribed = ref<'copied' | 'manual' | null>(null)
+async function subscribe() {
+  try {
+    await navigator.clipboard.writeText(feedUrl)
+    subscribed.value = 'copied'
+  } catch {
+    subscribed.value = 'manual'
+  }
+}
 </script>
 
 <template>
@@ -45,7 +58,14 @@ const egg = ref<InstanceType<typeof EscapeEgg>>()
           <span class="name">{{ c }}/</span>
           <span class="desc"># {{ CHANNEL_META[c].desc }}</span>
         </a>
-        <p class="ln" style="--d: 6"><span class="ps">$</span> tail -f sandbox-escape.log<span class="cursor" /></p>
+        <button class="ln tail" type="button" style="--d: 6" title="订阅更新（RSS）" @click="subscribe">
+          <span class="ps">$</span> tail -f sandbox-escape.log<span v-if="!subscribed" class="cursor" /><span class="hint">↵ 订阅</span>
+        </button>
+        <p v-if="subscribed" class="ln out sub">
+          <template v-if="subscribed === 'copied'">已复制订阅地址，粘贴到 RSS 阅读器即可：</template>
+          <template v-else>把这个地址粘贴到 RSS 阅读器：</template>
+          <a :href="feedUrl" target="_blank" rel="noopener">{{ feedUrl }}</a><span class="cursor" />
+        </p>
       </div>
     </section>
 
@@ -127,6 +147,18 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
 .cnt { display: inline-block; width: 3ch; text-align: right; margin: 0 14px 0 6px; color: var(--vp-c-text-3); }
 .name { display: inline-block; width: 8ch; font-weight: 600; color: var(--sx-c); }
 .desc { color: var(--vp-c-text-2); transition: color 0.15s; }
+
+/* tail -f：可点，悬停时右侧提示「↵ 订阅」 */
+.tail {
+  text-align: left; font: inherit; cursor: pointer;
+  border-radius: 4px; margin: 0 -8px; padding: 0 8px; width: calc(100% + 16px);
+  transition: background 0.15s;
+}
+.tail:hover { background: var(--vp-c-bg-soft); }
+.hint { float: right; font-size: 12px; color: var(--vp-c-text-3); opacity: 0; transition: opacity 0.15s; }
+.tail:hover .hint, .tail:focus-visible .hint { opacity: 1; color: var(--vp-c-brand-1); }
+.sub { white-space: normal; animation: none; }
+.sub a { color: var(--vp-c-brand-1); word-break: break-all; }
 
 .cursor {
   display: inline-block; width: 0.6em; height: 1.1em; margin-left: 6px;

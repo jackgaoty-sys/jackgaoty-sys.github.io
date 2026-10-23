@@ -22,7 +22,30 @@ const printing = ref(!!props.stream)
 const lead = computed(() => (props.pinned && active.value === 'all' ? 1 : 0))
 onMounted(() => {
   if (printing.value) setTimeout(() => (printing.value = false), 1800 + (log.length + 3) * 140)
+  canPeek.value = matchMedia('(hover: hover) and (min-width: 960px)').matches
 })
+
+// 悬停预览：鼠标停在某条上，旁边浮出这篇的分享卡片（/og/<网址>.png，构建时生成）。
+// 只在能悬停的大屏上开；图片加载失败（dev 下还没生成）就记下来不再显示。
+const PEEK_W = 360
+const PEEK_H = 189
+const canPeek = ref(false)
+const peek = ref<{ src: string; x: number; y: number } | null>(null)
+const missing = new Set<string>()
+
+function onMove(ev: MouseEvent, url: string) {
+  const src = '/og' + url + '.png'
+  if (!canPeek.value || missing.has(src)) return
+  let x = ev.clientX + 24
+  let y = ev.clientY + 18
+  if (x + PEEK_W > innerWidth - 16) x = ev.clientX - 24 - PEEK_W
+  if (y + PEEK_H > innerHeight - 16) y = innerHeight - 16 - PEEK_H
+  peek.value = { src, x, y }
+}
+function onPeekError() {
+  if (peek.value) missing.add(peek.value.src)
+  peek.value = null
+}
 </script>
 
 <template>
@@ -53,7 +76,7 @@ onMounted(() => {
         </a>
       </li>
       <li v-for="(e, i) in shown" :key="e.url" :style="{ '--i': lead + i }">
-        <a class="row" :href="e.url">
+        <a class="row" :href="e.url" @mousemove="onMove($event, e.url)" @mouseleave="peek = null">
           <span class="r-date">{{ e.date ?? '----------' }}</span>
           <span :class="['r-ch', 'c-' + e.channel]">{{ e.channel }}</span>
           <span class="r-no">#{{ pad(e.no) }}</span>
@@ -71,6 +94,19 @@ onMounted(() => {
         -- eof · {{ shown.length }} {{ shown.length > 1 ? 'entries' : 'entry' }} --
       </li>
     </ol>
+
+    <Teleport to="body">
+      <img
+        v-if="peek"
+        class="sx-peek"
+        :src="peek.src"
+        alt=""
+        :width="PEEK_W"
+        :height="PEEK_H"
+        :style="{ transform: `translate(${peek.x}px, ${peek.y}px)` }"
+        @error="onPeekError"
+      />
+    </Teleport>
   </div>
 </template>
 
@@ -129,6 +165,16 @@ onMounted(() => {
 .note { padding: 14px; font-size: 13px; color: var(--vp-c-text-3); }
 .lvl { color: var(--c-trace); }
 .eof { text-align: center; font-size: 12px; }
+
+.sx-peek {
+  position: fixed; top: 0; left: 0; z-index: 100;
+  width: 360px; height: 189px;
+  border-radius: 8px; border: 1px solid var(--vp-c-divider);
+  box-shadow: 0 18px 50px -12px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  animation: sx-peek-in 0.18s ease-out both;
+}
+@keyframes sx-peek-in { from { opacity: 0; } }
 
 /* ---- tail -f：首页终端最后一行出现后（约 1.6s），条目从左往右一行行「打印」出来 ---- */
 .printing .tabs { animation: sx-fade 0.3s 1.55s both; }

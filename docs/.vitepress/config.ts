@@ -4,6 +4,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SERIES, VISIBLE_SERIES, mergeRoadmap } from './series'
 import { ogHead } from './og'
+import { buildFeed } from './feed'
 
 const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -82,10 +83,14 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', href: '/avatar.png' }],
     ['meta', { name: 'theme-color', content: '#0e1116' }],
     ['meta', { property: 'og:site_name', content: SITE }],
+    ['link', { rel: 'alternate', type: 'application/rss+xml', title: SITE, href: '/feed.xml' }],
   ],
 
   // 每页的 og / twitter 信息和分享卡片图（构建时生成，见 og.ts）
   transformHead: ogHead,
+
+  // 构建完写出 /feed.xml（见 feed.ts）
+  buildEnd: buildFeed,
 
   sitemap: { hostname: 'https://jackgaoty-sys.github.io' },
 
@@ -103,11 +108,25 @@ export default defineConfig({
     // 只有系列有侧边栏（路线图）；trace / escape 的单篇文章居中阅读
     sidebar: Object.fromEntries(VISIBLE_SERIES.map((s) => ['/' + s.dir + '/', sidebarOf(s)])),
 
-    socialLinks: [{ icon: 'github', link: 'https://github.com/jackgaoty-sys' }],
+    socialLinks: [
+      { icon: 'github', link: 'https://github.com/jackgaoty-sys' },
+      {
+        icon: {
+          svg: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3a16 16 0 0 1 16 16h-3A13 13 0 0 0 5 6V3Zm0 6a10 10 0 0 1 10 10h-3a7 7 0 0 0-7-7V9Zm1.5 6a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Z"/></svg>',
+        },
+        link: '/feed.xml',
+        ariaLabel: 'RSS 订阅',
+      },
+    ],
 
     outline: { level: [2, 3], label: '本页目录' },
     docFooter: { prev: '上一篇', next: '下一篇' },
-    lastUpdatedText: '最后更新',
+    // 这是最后一次提交的时间，不是发布日期（发布日期在文章顶部），所以叫「修订于」。
+    // forceLocale：不跟浏览器语言走，否则英文系统上会显示成 10/23/26
+    lastUpdated: {
+      text: '修订于',
+      formatOptions: { forceLocale: true, year: 'numeric', month: '2-digit', day: '2-digit' },
+    },
     returnToTopLabel: '回到顶部',
     darkModeSwitchLabel: '主题',
     sidebarMenuLabel: '目录',
@@ -116,6 +135,24 @@ export default defineConfig({
     search: {
       provider: 'local',
       options: {
+        // 默认按空格切词，整句中文会被当成一个词，只有从句首开始的搜索才命中
+        // （搜「需求工程」找不到「……就是Agent的需求工程」）。改用浏览器 / Node 自带的中文分词。
+        // 注意：这个函数会被转成源码字符串送到浏览器里重建，不能引用外部变量。
+        miniSearch: {
+          options: {
+            tokenize: (text: string) => {
+              if (typeof Intl !== 'undefined' && 'Segmenter' in Intl) {
+                const seg = new Intl.Segmenter('zh', { granularity: 'word' })
+                return Array.from(seg.segment(text))
+                  .filter((s) => s.isWordLike)
+                  .map((s) => s.segment)
+              }
+              return text.split(/[\s\p{P}]+/u)
+            },
+          },
+          // 「需求工程」会被切成「需求」「工程」，两个都要命中才算，免得结果太散
+          searchOptions: { combineWith: 'AND' },
+        },
         translations: {
           button: { buttonText: '搜索', buttonAriaLabel: '搜索' },
           modal: {

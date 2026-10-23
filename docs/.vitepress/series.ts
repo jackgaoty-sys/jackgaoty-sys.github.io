@@ -19,7 +19,7 @@ export const SERIES: SeriesDef[] = [
     dir: 'dump/agentic-system-design',
     title: 'Agent系统设计',
     intro: '从意图识别、任务规划到工具调用与结果验证，拆解 AI Agent 如何理解目标并完成任务。',
-    pending: ['01 · 待定'],
+    pending: ['01 · 意图识别', '02 · 任务规划', '03 · 工具调用', '04 · 结果验证'],
   },
   {
     dir: 'dump/pi',

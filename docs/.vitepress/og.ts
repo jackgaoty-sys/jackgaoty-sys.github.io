@@ -21,7 +21,7 @@ const C = {
   bg: '#0E1116',
   text: '#D7DEE5',
   text2: '#8E9AA6',
-  text3: '#5D6974',
+  text3: '#7A8691',
   green1: '#3DDC97',
   green2: '#2EA876',
   green3: '#277A5A',
@@ -129,12 +129,15 @@ function brand(x: number, y: number, size: number) {
 
 function articleSvg(a: Article) {
   const color = CH_COLOR[a.channel]
-  // 标题避开右上角的光标块，宽度收到 740；两行放不下就把字号降一档再排
+  // 标题避开右上角的光标块，宽度收到 740；两行放不下就把字号降一档再排。
+  // 「01 · 意图识别」里的间隔号在线上用的 Noto 里是全角宽，再带两边的空格就显得很散，去掉空格。
+  // （本机预览用的冬青黑体里它是半角，会显得挤一点，以线上为准）
+  const title = a.title.replace(/\s*·\s*/g, '·')
   let size = 64
-  let lines = wrap(a.title, 740, size, 3)
+  let lines = wrap(title, 740, size, 3)
   if (lines.length > 2) {
     size = 54
-    lines = wrap(a.title, 740, size, 3)
+    lines = wrap(title, 740, size, 3)
   }
   const lh = Math.round(size * 1.3)
   // 标签 + 标题当成一块，在框内上下居中：标题一行时不至于下半张卡全空着

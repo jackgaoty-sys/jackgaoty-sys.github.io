@@ -25,7 +25,8 @@
   --vp-c-gutter: #e8eae4;
   --vp-c-text-1: #15191e;
   --vp-c-text-2: #4e5966;
-  --vp-c-text-3: #8a939c;
+  /* text-3 用在日期、编号这类小字上，在三种底色上都要 ≥ 4.5:1（WCAG AA） */
+  --vp-c-text-3: #646e79;
 
   --vp-c-brand-1: #11804f;
   --vp-c-brand-2: #169a61;
@@ -60,7 +61,7 @@
   --vp-c-gutter: #070a0d;
   --vp-c-text-1: #d7dee5;
   --vp-c-text-2: #8e9aa6;
-  --vp-c-text-3: #5d6974;
+  --vp-c-text-3: #7a8691;
 
   --vp-c-brand-1: #3ddc97;
   --vp-c-brand-2: #34c486;
@@ -113,6 +114,48 @@
 .vp-doc th { font-family: var(--vp-font-family-mono); font-size: 12.5px; font-weight: 600; color: var(--vp-c-text-2); }
 
 .vp-doc :not(pre) > code { font-size: 0.86em; }
+
+/* ---------------------------------------------------------------
+   代码块 = 终端窗口：顶上一条标题栏（三个圆点 + 语言名 + 复制按钮），
+   和首页的终端同一套样子。code-group 有自己的标签栏，不动。
+   --------------------------------------------------------------- */
+
+.vp-doc div[class*='language-']:not(.vp-code-group *) {
+  --sx-bar: 34px;
+  padding-top: var(--sx-bar);
+  border: 1px solid var(--vp-c-divider);
+  overflow: hidden; /* 横向滚动交给里面的 pre，标题栏才不会跟着滚走 */
+}
+.vp-doc div[class*='language-']:not(.vp-code-group *)::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: var(--sx-bar);
+  border-bottom: 1px solid var(--vp-c-divider);
+  background-image:
+    radial-gradient(circle, var(--vp-c-divider) 0 4px, transparent 4.5px),
+    radial-gradient(circle, var(--vp-c-divider) 0 4px, transparent 4.5px),
+    radial-gradient(circle, var(--vp-c-divider) 0 4px, transparent 4.5px);
+  background-size: 10px 10px;
+  background-repeat: no-repeat;
+  background-position: 14px 50%, 31px 50%, 48px 50%;
+}
+.vp-doc div[class*='language-']:not(.vp-code-group *) > span.lang {
+  top: 0; right: auto; left: 70px;
+  line-height: var(--sx-bar);
+  font-family: var(--vp-font-family-mono); font-weight: 400;
+  color: var(--vp-c-text-3);
+}
+.vp-doc div[class*='language-']:not(.vp-code-group *):hover > button.copy + span.lang,
+.vp-doc div[class*='language-']:not(.vp-code-group *) > button.copy:focus + span.lang { opacity: 1; }
+.vp-doc div[class*='language-']:not(.vp-code-group *) > button.copy {
+  top: 4px; right: 6px; width: 26px; height: 26px;
+  background-size: 14px; border-color: transparent; background-color: transparent;
+}
+.vp-doc div[class*='language-']:not(.vp-code-group *) > button.copy:hover { border-color: var(--vp-c-divider); }
+.vp-doc div[class*='language-']:not(.vp-code-group *) .line-numbers-wrapper { top: var(--sx-bar); }
+
+@media (max-width: 639px) {
+  .vp-doc div[class*='language-']:not(.vp-code-group *) { border-left: 0; border-right: 0; }
+}
 
 /* 侧边栏的分组标题也走等宽 */
 .VPSidebarItem.level-0 > .item .text { font-family: var(--vp-font-family-mono); font-size: 13px; }
