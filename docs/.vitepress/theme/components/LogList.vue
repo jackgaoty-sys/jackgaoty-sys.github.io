@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { data as log } from '../../../log.data'
 import { CHANNELS, pad, type Channel } from '../channels'
 import { unlocked } from '../escape'
+import StageTag from './StageTag.vue'
 
 const props = defineProps<{
   /** 只看某个频道；不传就是全站，并显示频道筛选 */
@@ -92,6 +93,7 @@ function onPeekError() {
           <span class="r-no">#{{ pad(e.no) }}</span>
           <span class="r-main">
             <span class="r-title">{{ e.title }}</span>
+            <StageTag v-if="e.stage" :stage="e.stage" />
             <span v-if="e.series" class="r-series">{{ e.series }}</span>
             <span v-if="e.excerpt" class="r-ex">{{ e.excerpt }}</span>
           </span>

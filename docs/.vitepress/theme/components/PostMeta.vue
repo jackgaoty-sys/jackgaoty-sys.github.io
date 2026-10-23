@@ -3,8 +3,9 @@ import { computed } from 'vue'
 import { useRoute } from 'vitepress'
 import { data as log } from '../../../log.data'
 import { pad } from '../channels'
+import StageTag from './StageTag.vue'
 
-// 文章正文上方的一行「日志头」：dump #001 · 2026-08-18 · 所属系列
+// 文章正文上方的一行「日志头」：dump #001 · [wip] · 2026-08-18 · 约 3 分钟 · 所属系列
 const route = useRoute()
 const path = computed(() => route.path.replace(/\.html$/, ''))
 const entry = computed(() => log.find((e) => e.url === path.value))
@@ -16,7 +17,9 @@ const entry = computed(() => log.find((e) => e.url === path.value))
     <p class="tags">
       <a class="ch" :href="'/' + entry.channel + '/'">{{ entry.channel }}</a>
       <span class="no">#{{ pad(entry.no) }}</span>
+      <StageTag v-if="entry.stage" :stage="entry.stage" />
       <span v-if="entry.date">{{ entry.date }}</span>
+      <span>约 {{ entry.minutes }} 分钟</span>
       <span v-if="entry.series" class="series">{{ entry.series }}</span>
     </p>
   </div>

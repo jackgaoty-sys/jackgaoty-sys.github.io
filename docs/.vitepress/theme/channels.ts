@@ -22,3 +22,17 @@ export const CHANNEL_META: Record<Channel, { desc: string; long: string }> = {
 
 /** 1 -> '001' */
 export const pad = (n: number) => String(n).padStart(3, '0')
+
+// 笔记成熟度，写在 frontmatter 的 stage 里，像日志级别一样挂在文章头和列表上。
+// 不写就不显示。允许发半成品 —— draft 也可以先上线，之后慢慢改成 wip、stable。
+export type Stage = 'draft' | 'wip' | 'stable'
+
+export const STAGE_META: Record<Stage, string> = {
+  draft: '草稿：想法刚落地，结论可能会变',
+  wip: '进行中：主体写完了，还在补充和修订',
+  stable: '定稿：反复推敲过，可以放心引用',
+}
+
+export function readStage(v: unknown): Stage | null {
+  return v === 'draft' || v === 'wip' || v === 'stable' ? v : null
+}

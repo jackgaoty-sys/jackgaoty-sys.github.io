@@ -13,6 +13,8 @@
   --c-trace: #1f78b4;
   --c-dump: #11804f;
   --c-escape: #c2522f;
+  /* 笔记成熟度 [wip] 的颜色（draft 用 text-3，stable 用品牌绿） */
+  --c-wip: #9a6700;
 
   --sx-term-bg: #f4f5f0;
   --sx-glow: rgba(17, 128, 79, 0.25);
@@ -49,6 +51,7 @@
   --c-trace: #5cc8ff;
   --c-dump: #3ddc97;
   --c-escape: #ff9e64;
+  --c-wip: #e3b341;
 
   --sx-term-bg: #0a0d11;
   --sx-glow: rgba(61, 220, 151, 0.18);

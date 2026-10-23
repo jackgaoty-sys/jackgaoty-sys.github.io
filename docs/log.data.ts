@@ -1,7 +1,7 @@
 import { createContentLoader } from 'vitepress'
 import { SERIES } from './.vitepress/series'
 import { readNo } from './.vitepress/lognum'
-import type { Channel } from './.vitepress/theme/channels'
+import { readStage, type Channel, type Stage } from './.vitepress/theme/channels'
 
 // 整站的日志流：trace / dump / escape 三个频道的文章合在一起，共用一套编号。
 // 编号在发布时写进 frontmatter 的 no，之后永不改动 —— 像数据库自增主键：
@@ -18,6 +18,12 @@ export interface LogEntry {
   excerpt: string
   /** 属于哪个系列（dump 下才有） */
   series: string | null
+  /** 成熟度（frontmatter 的 stage），没写就是 null、不显示 */
+  stage: Stage | null
+  /** 预计阅读分钟数 */
+  minutes: number
+  /** 相对 docs 的源文件路径，拼「修订历史」链接用 */
+  path: string
 }
 
 const hiddenDirs = SERIES.filter((s) => s.hidden).map((s) => '/' + s.dir + '/')
@@ -40,6 +46,9 @@ export default createContentLoader(['trace/**/*.md', 'dump/**/*.md', 'escape/**/
           date: normDate(fm.date),
           excerpt: fm.description ?? firstParagraph(p.src),
           series: series ? series.title : null,
+          stage: readStage(fm.stage),
+          minutes: readingMinutes(p.src),
+          path: p.url.slice(1) + '.md',
         }
       })
 
@@ -76,6 +85,14 @@ function normDate(d: unknown): string | null {
   if (!d) return null
   if (d instanceof Date) return d.toISOString().slice(0, 10)
   return String(d).slice(0, 10)
+}
+
+// 中文按每分钟 400 字、英文按每分钟 200 词估算，代码块也算进去（读代码同样花时间），至少 1 分钟
+function readingMinutes(src?: string): number {
+  const body = (src ?? '').replace(/^---[\s\S]*?---/, '')
+  const cjk = body.match(/[一-鿿]/g)?.length ?? 0
+  const words = body.match(/[A-Za-z0-9_]+/g)?.length ?? 0
+  return Math.max(1, Math.round(cjk / 400 + words / 200))
 }
 
 function firstHeading(src?: string): string | null {

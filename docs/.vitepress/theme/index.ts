@@ -8,6 +8,7 @@ import Layout from './Layout.vue'
 import Home from './components/Home.vue'
 import ChannelPage from './components/ChannelPage.vue'
 import Roadmap from './components/Roadmap.vue'
+import IntentDemo from './components/IntentDemo.vue'
 
 export default {
   extends: DefaultTheme,
@@ -17,5 +18,7 @@ export default {
     app.component('Home', Home)
     app.component('ChannelPage', ChannelPage)
     app.component('Roadmap', Roadmap)
+    // 文章里的交互演示，在 md 里直接写 <IntentDemo /> 即可
+    app.component('IntentDemo', IntentDemo)
   },
 } satisfies Theme

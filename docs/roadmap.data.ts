@@ -28,7 +28,8 @@ export default createContentLoader(['dump/*/*.md'], {
         title: fm.title || headingOf(page.src) || slug,
         link: page.url,
         source: fm.source || '',
-        status: fm.status || '进行中',
+        // 路线图状态跟着成熟度走：stable 算完成，其余算进行中；也可以用 status 直接写
+        status: fm.status || (fm.stage === 'stable' ? '完成' : '进行中'),
         slug,
       })
     }

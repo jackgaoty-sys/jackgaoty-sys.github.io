@@ -4,10 +4,11 @@ import { nextTick, onMounted, watch } from 'vue'
 import { useRoute } from 'vitepress'
 import mediumZoom, { type Zoom } from 'medium-zoom'
 import PostMeta from './components/PostMeta.vue'
+import GitLog from './components/GitLog.vue'
 import NotFound from './components/NotFound.vue'
 import { loadUnlocked, unlock } from './escape'
 
-// 包一层默认布局：文章正文上方挂日志头（频道 · 编号 · 日期），404 换成终端版，
+// 包一层默认布局：文章正文上方挂日志头（频道 · 编号 · 日期），末尾挂修订历史链接，404 换成终端版，
 // 顺带在每个页面读一次 escape/ 的解锁状态，访问 /escape/ 下的页面时直接解锁；
 // 正文里的图片点击放大（架构图、流程图看得清）。
 const Layout = DefaultTheme.Layout
@@ -37,6 +38,7 @@ onMounted(() => {
 <template>
   <Layout>
     <template #doc-before><PostMeta /></template>
+    <template #doc-footer-before><GitLog /></template>
     <template #not-found><NotFound /></template>
   </Layout>
 </template>
