@@ -1,10 +1,11 @@
-import { defineConfig } from 'vitepress'
+import { defineConfig, type HeadConfig } from 'vitepress'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SERIES, VISIBLE_SERIES, mergeRoadmap } from './series'
 import { ogHead } from './og'
 import { buildFeed } from './feed'
+import { ABOUT_ENABLED } from './flags'
 
 const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -60,13 +61,15 @@ export default defineConfig({
   lastUpdated: true,
 
   // 不参与构建：没有网址、不进列表、搜索也搜不到。
-  // drafts 是草稿，_templates 是 Obsidian 模板，hidden 的系列还没准备好见人。
+  // drafts 是草稿，_templates 是 Obsidian 模板，hidden 的系列还没准备好见人，
+  // about 在重写期间先下线（开关在 flags.ts）。
   // 注意仓库是 public 的，这些内容在 GitHub 上仍然可见 —— 只是站点上没有。
   srcExclude: [
     'drafts/**',
     '**/drafts/**',
     '_templates/**',
     ...SERIES.filter((s) => s.hidden).map((s) => s.dir + '/**'),
+    ...(ABOUT_ENABLED ? [] : ['about.md']),
   ],
 
   markdown: {
@@ -84,8 +87,19 @@ export default defineConfig({
     ['meta', { name: 'theme-color', content: '#0e1116' }],
     ['meta', { property: 'og:site_name', content: SITE }],
     ['link', { rel: 'alternate', type: 'application/rss+xml', title: SITE, href: '/feed.xml' }],
-    // 本次浏览里解锁过 escape/：首屏渲染前就挂上 class，免得换页时先看到两个频道再闪成三个（见 theme/escape.ts）
-    ['script', {}, "try{if(sessionStorage.getItem('sx-escape')==='1')document.documentElement.classList.add('sx-unlocked')}catch(e){}"],
+    // 直接打开 /escape/ 下的页面就算解锁：首屏渲染前先挂上 class，导航里的 escape 不会晚一拍才冒出来（见 theme/escape.ts）
+    ['script', {}, "if(location.pathname.indexOf('/escape/')===0)document.documentElement.classList.add('sx-unlocked')"],
+    // About 重写中（flags.ts）：入口照常显示，但点不了。放在 head 里，页面还没加载完时点也拦得住；
+    // 在捕获阶段拦在 VitePress 路由之前，键盘回车触发的 click 也一并拦下
+    ...(ABOUT_ENABLED
+      ? []
+      : ([
+          [
+            'script',
+            {},
+            "document.documentElement.classList.add('sx-about-off');addEventListener('click',function(e){var a=e.target&&e.target.closest&&e.target.closest('a[href=\"/about\"]');if(a){e.preventDefault();e.stopImmediatePropagation()}},true)",
+          ],
+        ] as HeadConfig[])),
   ],
 
   // 每页的 og / twitter 信息和分享卡片图（构建时生成，见 og.ts）

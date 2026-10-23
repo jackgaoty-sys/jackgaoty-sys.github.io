@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vitepress'
 import { data as log } from '../../../log.data'
 import { CHANNELS, CHANNEL_META, pad } from '../channels'
+import { ABOUT_ENABLED } from '../../flags'
 
 // 404：终端里 cd 进一个不存在的目录。给出最像的几个页面，按 Esc（或点 cd ~）回首页。
 // 访问的路径只在浏览器里才知道（404.html 是同一份静态页），所以挂载后再读。
@@ -20,7 +21,7 @@ const pages: Hit[] = [
   ...log.map((e) => ({ url: e.url, label: `${e.channel} #${pad(e.no)} · ${e.title}` })),
   ...CHANNELS.map((c) => ({ url: `/${c}/`, label: `${c}/ · ${CHANNEL_META[c].desc}` })),
   { url: '/readme', label: 'README.md' },
-  { url: '/about', label: 'about.md' },
+  ...(ABOUT_ENABLED ? [{ url: '/about', label: 'about.md' }] : []),
 ]
 
 // 按路径里的词去匹配网址和标题，命中的词越长分越高；一个都没命中就给最近的几篇

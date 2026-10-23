@@ -86,6 +86,11 @@
 .VPNavBarMenuLink, .VPNavScreenMenuLink { font-family: var(--vp-font-family-mono); font-size: 13.5px; }
 .VPNavBar:not(.home.top) .divider-line { background-color: var(--vp-c-divider); }
 
+/* About 重写中（flags.ts）：入口照常显示，变灰、点不了（点击拦截在 config.ts 的 head 脚本里）。
+   悬停也不变色，免得看起来像能点 */
+html.sx-about-off a[href='/about'] { opacity: 0.4; cursor: not-allowed; }
+html.sx-about-off a[href='/about']:hover { color: inherit !important; }
+
 /* escape/ 没解锁之前不出现在导航里（见 theme/escape.ts）；刚解锁的那一下淡入、闪一下橙色 */
 html:not(.sx-unlocked) .VPNavBarMenuLink[href='/escape/'],
 html:not(.sx-unlocked) .VPNavScreenMenuLink[href='/escape/'] { display: none; }
@@ -170,3 +175,9 @@ html.sx-just-unlocked .VPNavBarMenuLink[href='/escape/'] { animation: sx-nav-in 
 .VPSidebarItem.level-0 > .item .text { font-family: var(--vp-font-family-mono); font-size: 13px; }
 
 .VPFooter { font-family: var(--vp-font-family-mono); font-size: 12px; }
+
+/* 正文图片点击放大（medium-zoom，见 Layout.vue）：可点的图给个放大镜光标，
+   放大层要盖过导航栏和侧边栏 */
+.vp-doc img:not(a img) { cursor: zoom-in; }
+.medium-zoom-overlay { z-index: 100; }
+.medium-zoom-image--opened { z-index: 101; cursor: zoom-out; }

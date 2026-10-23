@@ -1,7 +1,7 @@
 // 所有系列的唯一定义处。系列都挂在 dump/ 下（成体系的技术拆解与笔记）。
 // 侧边栏、dump 页的系列卡片、每个系列页里的路线图表格，全部从这里生成。
-// 加系列由写作台按 @新系列-定义 锚点插入；pending 是「还没写」的条目，
-// 写好同编号的文件后会自动消失（01-agent-loop.md 顶掉 '01 · Agent 主循环'）。
+// 加系列：在下面加一段定义，再建 dump/<目录>/index.md（正文里放 <Roadmap dir="dump/<目录>" />）。
+// pending 是「还没写」的条目，写好同编号的文件后会自动消失（01-agent-loop.md 顶掉 '01 · Agent 主循环'）。
 
 export interface SeriesDef {
   /** 相对 docs 的目录，例如 dump/pi */
@@ -41,7 +41,6 @@ export const SERIES: SeriesDef[] = [
     pending: ['01 · 待定'],
     hidden: true,
   },
-  // @新系列-定义（写作台按此锚点插入，勿删）
 ]
 
 export const VISIBLE_SERIES = SERIES.filter((s) => !s.hidden)

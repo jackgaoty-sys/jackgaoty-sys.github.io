@@ -1,4 +1,5 @@
-import DefaultTheme from 'vitepress/theme'
+// 不带字体的版本：默认主题会加载 Inter，但本站正文用系统中文字体、等宽用 JetBrains Mono，Inter 用不上
+import DefaultTheme from 'vitepress/theme-without-fonts'
 import type { Theme } from 'vitepress'
 import '@fontsource/jetbrains-mono/400.css'
 import '@fontsource/jetbrains-mono/600.css'
