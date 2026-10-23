@@ -369,7 +369,7 @@ function newFile() {
   const path = 'docs/' + name.replace(/^\/+/, '');
   if (!/\.(md|ts)$/.test(path)) { msg('只支持 .md 和 .ts', 'err'); return; }
   current = { path, sha: null };
-  $('editor').value = '---\ndate: ' + new Date().toISOString().slice(0, 10) + '\n---\n\n# 标题\n\n';
+  $('editor').value = '---\nno: # 发布前填：首页最上面那篇的编号 + 1，发布后永不改\ndate: ' + new Date().toISOString().slice(0, 10) + '\n---\n\n# 标题\n\n';
   $('path').textContent = path + '（新文件，提交后才存在）';
   $('saveBtn').disabled = false;
   $('renameBtn').disabled = true; // 还没有 blob，改名无从谈起
