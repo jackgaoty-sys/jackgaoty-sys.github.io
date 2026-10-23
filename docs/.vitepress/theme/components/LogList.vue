@@ -37,8 +37,8 @@ const count = (c: Channel | 'all') => (c === 'all' ? log.length : log.filter((e)
           <span class="r-ch">readme</span>
           <span class="r-no">#000</span>
           <span class="r-main">
-            <span class="r-title">README.md <span class="todo">(TODO)</span></span>
-            <span class="r-ex">发刊词先欠着。等写够十篇实在的，再来补这份自我介绍。</span>
+            <span class="r-title">README.md</span>
+            <span class="r-ex">本站的记录范围、三个频道的划分，以及文章编号规则。</span>
           </span>
         </a>
       </li>
@@ -104,7 +104,6 @@ const count = (c: Channel | 'all') => (c === 'all' ? log.length : log.filter((e)
   font-size: 15.5px; font-weight: 600; color: var(--vp-c-text-1);
   transition: color 0.15s;
 }
-.todo { font-family: var(--vp-font-family-mono); font-size: 12px; font-weight: 400; color: var(--vp-c-text-3); }
 .r-series {
   font-size: 11.5px; padding: 0 6px; border-radius: 3px;
   border: 1px solid var(--vp-c-divider); color: var(--vp-c-text-2);

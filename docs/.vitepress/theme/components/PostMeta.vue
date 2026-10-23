@@ -22,7 +22,7 @@ const entry = computed(() => log.find((e) => e.url === path.value))
   </div>
   <div v-else-if="path === '/readme'" class="sx-meta">
     <p class="cmd"><span class="ps">$</span> cat README.md</p>
-    <p class="tags"><span class="ch">readme</span><span class="no">#000</span><span>pinned · TODO</span></p>
+    <p class="tags"><span class="ch">readme</span><span class="no">#000</span><span>pinned</span></p>
   </div>
 </template>
 
