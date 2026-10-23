@@ -32,7 +32,10 @@ jobs:
 
       # 分享卡片（docs/.vitepress/og.ts）构建时用系统字体渲染中文，runner 默认没有中文字体。
       # 装完再确认一遍：没有中文字体就直接失败，免得上线一批中文全是方块的卡片。
+      # 软件源偶尔会卡死（平时 1 分钟内装完），5 分钟没装完就判失败，到 Actions 页面重跑即可，
+      # 不然要等 GitHub 默认的 6 小时才超时。
       - name: Install CJK fonts for share cards
+        timeout-minutes: 5
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends fonts-noto-cjk
