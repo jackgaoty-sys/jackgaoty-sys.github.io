@@ -1,5 +1,6 @@
 import { createContentLoader } from 'vitepress'
 import { SERIES } from './.vitepress/series'
+import { readNo } from './.vitepress/lognum'
 import type { Channel } from './.vitepress/theme/channels'
 
 // 整站的日志流：trace / dump / escape 三个频道的文章合在一起，共用一套编号。
@@ -49,15 +50,7 @@ export default createContentLoader(['trace/**/*.md', 'dump/**/*.md', 'escape/**/
   },
 })
 
-// 直接从原文读 no，不走 YAML 解析：YAML 会把 no: 010 当成八进制的 8。
-// 返回 NaN 表示没写或写得不对，交给 checkNumbers 统一报错。
-function readNo(src?: string): number {
-  const fm = src?.match(/^---\r?\n([\s\S]*?)\r?\n---/)?.[1] ?? ''
-  const m = fm.match(/^no:[ \t]*['"]?(\d+)['"]?[ \t]*(#.*)?$/m)
-  const n = m ? parseInt(m[1], 10) : NaN
-  return n > 0 ? n : NaN
-}
-
+// readNo 返回 NaN 表示没写或写得不对，这里统一报错
 function checkNumbers(entries: LogEntry[]) {
   const problems: string[] = []
   const byNo = new Map<number, string[]>()

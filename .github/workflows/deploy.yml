@@ -30,6 +30,15 @@ jobs:
 
       - run: npm ci
 
+      # 分享卡片（docs/.vitepress/og.ts）构建时用系统字体渲染中文，runner 默认没有中文字体。
+      # 装完再确认一遍：没有中文字体就直接失败，免得上线一批中文全是方块的卡片。
+      - name: Install CJK fonts for share cards
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends fonts-noto-cjk
+          sudo apt-get install -y -qq --no-install-recommends fonts-jetbrains-mono || echo "JetBrains Mono 装不上，等宽字回退到 DejaVu Sans Mono"
+          fc-list :lang=zh family | grep -q . || { echo "没有可用的中文字体"; exit 1; }
+
       - run: npm run docs:build
 
       - uses: actions/configure-pages@v5

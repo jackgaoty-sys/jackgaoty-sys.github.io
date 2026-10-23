@@ -3,6 +3,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { SERIES, VISIBLE_SERIES, mergeRoadmap } from './series'
+import { ogHead } from './og'
 
 const LF = String.fromCharCode(10)
 const docsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
@@ -81,8 +82,10 @@ export default defineConfig({
     ['link', { rel: 'apple-touch-icon', href: '/avatar.png' }],
     ['meta', { name: 'theme-color', content: '#0e1116' }],
     ['meta', { property: 'og:site_name', content: SITE }],
-    ['meta', { property: 'og:image', content: 'https://jackgaoty-sys.github.io/avatar.png' }],
   ],
+
+  // 每页的 og / twitter 信息和分享卡片图（构建时生成，见 og.ts）
+  transformHead: ogHead,
 
   sitemap: { hostname: 'https://jackgaoty-sys.github.io' },
 

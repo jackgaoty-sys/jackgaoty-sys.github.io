@@ -1,19 +1,26 @@
 <script setup lang="ts">
 import { data as log } from '../../../log.data'
 import { CHANNELS, CHANNEL_META } from '../channels'
+import { ref } from 'vue'
 import Avatar from './Avatar.vue'
+import EscapeEgg from './EscapeEgg.vue'
 import LogList from './LogList.vue'
 
 const count = (c: string) => log.filter((e) => e.channel === c).length
+const egg = ref<InstanceType<typeof EscapeEgg>>()
 </script>
 
 <template>
   <div class="sx-home">
     <section class="hero">
-      <Avatar class="hero-avatar" animated />
+      <button class="hero-avatar" type="button" aria-label="逃出沙箱" @click="egg?.trigger()">
+        <Avatar animated />
+      </button>
       <div class="hero-text">
         <h1 class="hero-title">沙箱逃逸<span class="ext">.log</span></h1>
-        <p class="hero-tag">读源码、拆项目、记踩坑；<span class="nowrap">偶尔按一下 <kbd>Esc</kbd>。</span></p>
+        <p class="hero-tag">
+          读源码、拆项目、记踩坑；<span class="nowrap">偶尔按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="egg?.trigger()" @keydown.enter="egg?.trigger()">Esc</kbd>。</span>
+        </p>
       </div>
     </section>
 
@@ -43,8 +50,10 @@ const count = (c: string) => log.filter((e) => e.channel === c).length
     </section>
 
     <section class="feed">
-      <LogList pinned />
+      <LogList pinned stream />
     </section>
+
+    <EscapeEgg ref="egg" />
   </div>
 </template>
 
@@ -57,7 +66,13 @@ const count = (c: string) => log.filter((e) => e.channel === c).length
 
 /* ---- hero：头像 + 名字 ---- */
 .hero { display: flex; align-items: center; gap: 28px; }
-.hero-avatar { width: 132px; height: 132px; flex-shrink: 0; }
+.hero-avatar {
+  width: 132px; height: 132px; flex-shrink: 0;
+  padding: 0; border-radius: 12px; cursor: pointer;
+  transition: transform 0.2s;
+}
+.hero-avatar:hover { transform: scale(1.04); }
+.hero-avatar:active { transform: scale(0.97); }
 .hero-title {
   margin: 0;
   font-size: 46px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em;
@@ -71,7 +86,10 @@ kbd {
   padding: 1px 6px; border-radius: 4px;
   border: 1px solid var(--vp-c-divider); border-bottom-width: 2px;
   background: var(--vp-c-bg-soft); color: var(--vp-c-text-1);
+  cursor: pointer; transition: border-color 0.2s, transform 0.1s;
 }
+kbd:hover { border-color: var(--vp-c-brand-1); }
+kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
 
 /* ---- 终端：频道入口 ---- */
 .term {
