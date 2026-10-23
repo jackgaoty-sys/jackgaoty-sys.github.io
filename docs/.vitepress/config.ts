@@ -125,7 +125,7 @@ export default defineConfig({
     },
 
     footer: {
-      message: '$ exit 0 · 内容为个人学习笔记，引用的源码均为开源',
+      message: '内容为个人学习笔记，引用的源码均为开源',
       copyright: '© 2026 TAT · 沙箱逃逸.log',
     },
   },

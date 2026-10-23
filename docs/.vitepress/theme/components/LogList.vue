@@ -33,12 +33,12 @@ const count = (c: Channel | 'all') => (c === 'all' ? log.length : log.filter((e)
     <ol class="rows">
       <li v-if="pinned && active === 'all'">
         <a class="row pinned" href="/readme">
-          <span class="r-date">pinned</span>
+          <span class="r-date">置顶</span>
           <span class="r-ch">readme</span>
           <span class="r-no">#000</span>
           <span class="r-main">
-            <span class="r-title">README.md <span class="todo">(TODO)</span></span>
-            <span class="r-ex">这里写什么、为什么写，以及三个频道分别装什么。</span>
+            <span class="r-title">为什么有了这个日志库？</span>
+            <span class="r-ex">按照惯例，这里本来应该有一篇宏大的发刊词。</span>
           </span>
         </a>
       </li>
@@ -104,7 +104,6 @@ const count = (c: Channel | 'all') => (c === 'all' ? log.length : log.filter((e)
   font-size: 15.5px; font-weight: 600; color: var(--vp-c-text-1);
   transition: color 0.15s;
 }
-.todo { font-family: var(--vp-font-family-mono); font-size: 12px; font-weight: 400; color: var(--vp-c-text-3); }
 .r-series {
   font-size: 11.5px; padding: 0 6px; border-radius: 3px;
   border: 1px solid var(--vp-c-divider); color: var(--vp-c-text-2);

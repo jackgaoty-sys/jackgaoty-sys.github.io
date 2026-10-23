@@ -18,8 +18,8 @@ const progress = (dir: string) => {
 <template>
   <div class="sx-channel" :class="'c-' + channel">
     <header class="head">
-      <p class="cmd"><span class="ps">$</span> cd ~/{{ channel }} &amp;&amp; ls</p>
       <h1 class="title">{{ channel }}<span class="slash">/</span></h1>
+      <p class="subtitle">{{ meta.desc }}</p>
       <p class="desc">{{ meta.long }}</p>
     </header>
 
@@ -45,14 +45,13 @@ const progress = (dir: string) => {
 .sx-channel { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; }
 
 .head { margin-bottom: 36px; }
-.cmd { margin: 0 0 6px; font-family: var(--vp-font-family-mono); font-size: 13px; color: var(--vp-c-text-3); }
-.ps { color: var(--vp-c-brand-1); margin-right: 4px; }
 .title {
   margin: 0; font-family: var(--vp-font-family-mono);
   font-size: 44px; line-height: 1.2; font-weight: 700; color: var(--sx-c);
 }
 .slash { color: var(--vp-c-text-3); font-weight: 400; }
-.desc { margin: 12px 0 0; max-width: 40rem; font-size: 15.5px; line-height: 1.8; color: var(--vp-c-text-2); }
+.subtitle { margin: 10px 0 0; font-size: 18px; font-weight: 600; color: var(--vp-c-text-1); }
+.desc { margin: 6px 0 0; max-width: 40rem; font-size: 15.5px; line-height: 1.8; color: var(--vp-c-text-2); }
 
 .sec {
   margin: 0 0 14px; font-family: var(--vp-font-family-mono);

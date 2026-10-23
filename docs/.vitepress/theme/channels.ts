@@ -8,15 +8,15 @@ export const CHANNELS: Channel[] = ['trace', 'dump', 'escape']
 export const CHANNEL_META: Record<Channel, { desc: string; long: string }> = {
   trace: {
     desc: '工程与项目复盘',
-    long: '实打实的工程与项目复盘：做了什么、哪里翻了车、删掉了哪些花架子。',
+    long: '从零到一搭系统时踩过的坑、架构重构时的权衡，以及那些没有写进官方文档的真实生产环境日志。',
   },
   dump: {
-    desc: '技术拆解与硬核笔记',
-    long: '高密度的源码拆解与技术笔记。成体系的内容收在系列里，按路线图一篇篇推进。',
+    desc: '硬核拆解与笔记',
+    long: '把复杂框架、前沿论文或核心源码扒开揉碎，做一次高密度的脑内内存转储（Brain Dump）。',
   },
   escape: {
-    desc: '按一下 Esc，聊技术之外',
-    long: '从具体的代码逻辑里退出来喘口气，聊聊行业、产品和人。',
+    desc: '沙箱之外的思考',
+    long: '当我们关掉 IDE 之后，关于 AI 时代、产品意义、技术虚无与个体价值的一些主观大实话。',
   },
 }
 
