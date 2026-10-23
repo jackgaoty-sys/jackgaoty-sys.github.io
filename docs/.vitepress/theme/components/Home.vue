@@ -1,13 +1,32 @@
 <script setup lang="ts">
 import { data as log } from '../../../log.data'
 import { CHANNELS, CHANNEL_META } from '../channels'
-import { ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import Avatar from './Avatar.vue'
-import EscapeEgg from './EscapeEgg.vue'
 import LogList from './LogList.vue'
 
 const count = (c: string) => log.filter((e) => e.channel === c).length
-const egg = ref<InstanceType<typeof EscapeEgg>>()
+
+// Esc 彩蛋：按 Esc（或点头像、点标语里的 Esc 键帽）——
+// 头像里的光标再逃一次，终端末尾安静地多出一行 cd ../escape。不遮屏、不弹提示。
+const avatar = ref<InstanceType<typeof Avatar>>()
+const escaped = ref(false)
+function escape() {
+  avatar.value?.escape()
+  escaped.value = true
+}
+
+function onKey(e: KeyboardEvent) {
+  if (e.key !== 'Escape' || e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+  // 搜索框、手机菜单开着的时候，Esc 是在关它们，别抢
+  if (document.querySelector('.VPLocalSearchBox, .VPNavScreen')) return
+  const el = document.activeElement
+  if (el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return
+  escape()
+}
+// 捕获阶段监听：赶在搜索框自己的 Esc 处理（会把搜索框关掉）之前判断它是否开着
+onMounted(() => window.addEventListener('keydown', onKey, true))
+onBeforeUnmount(() => window.removeEventListener('keydown', onKey, true))
 
 // 点 tail -f 那一行 = 订阅：把 RSS 地址复制到剪贴板，终端里回显一行结果。
 // 剪贴板不可用（非 https、浏览器拒绝）时就把地址直接摆出来让人自己复制。
@@ -21,18 +40,21 @@ async function subscribe() {
     subscribed.value = 'manual'
   }
 }
+
+// 闪烁光标只挂在终端最后一行上
+const lastLine = computed(() => (escaped.value ? 'esc' : subscribed.value ? 'sub' : 'tail'))
 </script>
 
 <template>
   <div class="sx-home">
     <section class="hero">
-      <button class="hero-avatar" type="button" aria-label="逃出沙箱" @click="egg?.trigger()">
-        <Avatar animated />
+      <button class="hero-avatar" type="button" aria-label="逃出沙箱" @click="escape">
+        <Avatar ref="avatar" animated />
       </button>
       <div class="hero-text">
         <h1 class="hero-title">沙箱逃逸<span class="ext">.log</span></h1>
         <p class="hero-tag">
-          读源码、拆项目、记踩坑；<span class="nowrap">偶尔按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="egg?.trigger()" @keydown.enter="egg?.trigger()">Esc</kbd>。</span>
+          读源码、拆项目、记踩坑；<span class="nowrap">偶尔按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="escape" @keydown.enter="escape">Esc</kbd>。</span>
         </p>
       </div>
     </section>
@@ -59,21 +81,22 @@ async function subscribe() {
           <span class="desc"># {{ CHANNEL_META[c].desc }}</span>
         </a>
         <button class="ln tail" type="button" style="--d: 6" title="订阅更新（RSS）" @click="subscribe">
-          <span class="ps">$</span> tail -f sandbox-escape.log<span v-if="!subscribed" class="cursor" /><span class="hint">↵ 订阅</span>
+          <span class="ps">$</span> tail -f sandbox-escape.log<span v-if="lastLine === 'tail'" class="cursor" /><span class="hint">↵ 订阅</span>
         </button>
         <p v-if="subscribed" class="ln out sub">
           <template v-if="subscribed === 'copied'">已复制订阅地址，粘贴到 RSS 阅读器即可：</template>
           <template v-else>把这个地址粘贴到 RSS 阅读器：</template>
-          <a :href="feedUrl" target="_blank" rel="noopener">{{ feedUrl }}</a><span class="cursor" />
+          <a :href="feedUrl" target="_blank" rel="noopener">{{ feedUrl }}</a><span v-if="lastLine === 'sub'" class="cursor" />
         </p>
+        <a v-if="escaped" class="ln esc-line" href="/escape/">
+          <span class="ps">$</span> cd ../escape <span class="desc"># 你按了 Esc</span><span class="cursor" />
+        </a>
       </div>
     </section>
 
     <section class="feed">
       <LogList pinned stream />
     </section>
-
-    <EscapeEgg ref="egg" />
   </div>
 </template>
 
@@ -158,6 +181,20 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
 .hint { float: right; font-size: 12px; color: var(--vp-c-text-3); opacity: 0; transition: opacity 0.15s; }
 .tail:hover .hint, .tail:focus-visible .hint { opacity: 1; color: var(--vp-c-brand-1); }
 .sub { white-space: normal; animation: none; }
+
+/* Esc 之后追加的那一行：像被敲出来一样从左往右出现，可点进 escape/ */
+.esc-line {
+  text-decoration: none; border-radius: 4px; margin: 0 -8px; padding: 0 8px;
+  animation: sx-type 0.45s 0.35s steps(18, end) both;
+  transition: background 0.15s;
+}
+.esc-line:hover { background: var(--vp-c-bg-soft); }
+.esc-line .desc { color: var(--vp-c-text-3); }
+.esc-line:hover .desc { color: var(--c-escape); }
+@keyframes sx-type {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
 .sub a { color: var(--vp-c-brand-1); word-break: break-all; }
 
 .cursor {
