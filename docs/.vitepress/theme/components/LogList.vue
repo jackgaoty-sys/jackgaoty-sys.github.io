@@ -87,7 +87,7 @@ function onPeekError() {
         </a>
       </li>
       <li v-for="(e, i) in shown" :key="e.url" :style="{ '--i': lead + i }">
-        <a class="row" :href="e.url" @mousemove="onMove($event, e.url)" @mouseleave="peek = null">
+        <a class="row" :class="'c-' + e.channel" :href="e.url" @mousemove="onMove($event, e.url)" @mouseleave="peek = null">
           <span class="r-date">{{ e.date ?? '----------' }}</span>
           <span :class="['r-ch', 'c-' + e.channel]">{{ e.channel }}</span>
           <span class="r-no">#{{ pad(e.no) }}</span>
@@ -146,11 +146,13 @@ function onPeekError() {
   gap: 0 14px;
   padding: 14px 12px 14px 14px;
   border-bottom: 1px solid var(--vp-c-divider);
+  border-left: 2px solid transparent;
   color: inherit;
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s;
 }
-.row:hover { background: var(--vp-c-bg-soft); }
+/* 悬停时左边亮一道频道色（trace 蓝 / dump 绿 / escape 橙），一眼看出这条属于哪个频道 */
+.row:hover { background: var(--vp-c-bg-soft); border-left-color: var(--sx-c, var(--vp-c-brand-1)); }
 .row:hover .r-title { color: var(--vp-c-brand-1); }
 
 .r-date, .r-no { font-size: 12.5px; color: var(--vp-c-text-3); font-variant-numeric: tabular-nums; }
