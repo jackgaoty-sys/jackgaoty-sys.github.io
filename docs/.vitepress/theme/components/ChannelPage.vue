@@ -18,7 +18,6 @@ const progress = (dir: string) => {
 <template>
   <div class="sx-channel" :class="'c-' + channel">
     <header class="head">
-      <p class="cmd"><span class="ps">$</span> cd ~/{{ channel }} &amp;&amp; ls</p>
       <h1 class="title">{{ channel }}<span class="slash">/</span></h1>
       <p class="desc">{{ meta.long }}</p>
     </header>
@@ -45,8 +44,6 @@ const progress = (dir: string) => {
 .sx-channel { max-width: 920px; margin: 0 auto; padding: 56px 24px 96px; }
 
 .head { margin-bottom: 36px; }
-.cmd { margin: 0 0 6px; font-family: var(--vp-font-family-mono); font-size: 13px; color: var(--vp-c-text-3); }
-.ps { color: var(--vp-c-brand-1); margin-right: 4px; }
 .title {
   margin: 0; font-family: var(--vp-font-family-mono);
   font-size: 44px; line-height: 1.2; font-weight: 700; color: var(--sx-c);

@@ -69,7 +69,7 @@ const lastLine = computed(() => (echoed.value ? 'echo' : subscribed.value ? 'sub
       <div class="hero-text">
         <h1 class="hero-title">沙箱逃逸<span class="ext">.log</span></h1>
         <p class="hero-tag">
-          给 Agent 造沙箱的人，<span class="nowrap">偶尔也想按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="escape" @keydown.enter="escape">Esc</kbd>。</span>
+          给 Agent 造沙箱的人，<span class="nowrap">偶尔也想按一下 <kbd role="button" tabindex="0" title="真的可以按" @click="escape" @keydown.enter="escape" @keydown.space.prevent="escape">Esc</kbd>。</span>
         </p>
       </div>
     </section>
@@ -110,7 +110,8 @@ const lastLine = computed(() => (echoed.value ? 'echo' : subscribed.value ? 'sub
       </div>
     </section>
 
-    <section class="feed">
+    <section class="feed" aria-labelledby="feed-title">
+      <h2 id="feed-title" class="sr-only">全部日志</h2>
       <LogList pinned stream hide-locked />
     </section>
   </div>
@@ -149,6 +150,9 @@ kbd {
 }
 kbd:hover { border-color: var(--vp-c-brand-1); }
 kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
+/* 键帽和 about 链接本身很小：用伪元素把可点区域往外扩，手指好按 */
+kbd, .more { position: relative; }
+kbd::after, .more::after { content: ''; position: absolute; inset: -12px -6px; }
 
 /* ---- 终端：频道入口 ---- */
 .term {
@@ -172,7 +176,8 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
   display: block; margin: 0; line-height: 1.95;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   color: var(--vp-c-text-1);
-  animation: sx-line 0.01s calc(0.25s + var(--d) * 0.22s) both;
+  /* 一行行冒出来，但整屏 0.8 秒内出齐 —— 内容不该等动画 */
+  animation: sx-line 0.01s calc(0.15s + var(--d) * 0.08s) both;
 }
 .out { color: var(--vp-c-text-2); }
 .ps { color: var(--vp-c-brand-1); margin-right: 4px; user-select: none; }
@@ -238,6 +243,13 @@ kbd:active { transform: translateY(1px); border-bottom-width: 1px; }
   /* whoami 那行比较长，窄屏上允许折行，别把 about 链接截掉 */
   .wrap { white-space: normal; line-height: 1.7; padding: 3px 0; }
   .wrap .more { margin-left: 0; white-space: nowrap; }
+}
+
+/* 触屏：终端里能点的行撑到 44px 高，手指点得中 */
+@media (pointer: coarse) {
+  .ch, .tail { display: flex; align-items: center; min-height: 44px; }
+  .ch .desc { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .tail .hint { display: none; }
 }
 </style>
 

@@ -32,7 +32,7 @@ const count = (c: Channel | 'all') =>
 const printing = ref(!!props.stream)
 const lead = computed(() => (props.pinned && active.value === 'all' ? 1 : 0))
 onMounted(() => {
-  if (printing.value) setTimeout(() => (printing.value = false), 2050 + (log.length + 3) * 140)
+  if (printing.value) setTimeout(() => (printing.value = false), 1300 + (log.length + 3) * 60)
   canPeek.value = matchMedia('(hover: hover) and (min-width: 960px)').matches
 })
 
@@ -61,12 +61,12 @@ function onPeekError() {
 
 <template>
   <div class="sx-log" :class="{ printing }">
-    <div v-if="!channel" class="tabs" role="tablist" aria-label="按频道筛选">
+    <div v-if="!channel" class="tabs" role="group" aria-label="按频道筛选">
       <button
         v-for="c in ['all', ...channels] as const"
         :key="c"
-        role="tab"
-        :aria-selected="active === c"
+        type="button"
+        :aria-pressed="active === c"
         :class="['tab', 'c-' + c, { on: active === c }]"
         @click="active = c"
       >
@@ -129,6 +129,7 @@ function onPeekError() {
 .tab {
   font-size: 13px; padding: 4px 10px; border-radius: 4px;
   border: 1px solid var(--vp-c-divider); color: var(--vp-c-text-2);
+  cursor: pointer;
   transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .tab:hover { color: var(--vp-c-text-1); border-color: var(--vp-c-text-3); }
@@ -145,12 +146,11 @@ function onPeekError() {
   gap: 0 14px;
   padding: 14px 12px 14px 14px;
   border-bottom: 1px solid var(--vp-c-divider);
-  border-left: 2px solid transparent;
   color: inherit;
   text-decoration: none;
   transition: background 0.15s, border-color 0.15s;
 }
-.row:hover { background: var(--vp-c-bg-soft); border-left-color: var(--sx-c, var(--vp-c-brand-1)); }
+.row:hover { background: var(--vp-c-bg-soft); }
 .row:hover .r-title { color: var(--vp-c-brand-1); }
 
 .r-date, .r-no { font-size: 12.5px; color: var(--vp-c-text-3); font-variant-numeric: tabular-nums; }
@@ -188,9 +188,9 @@ function onPeekError() {
 }
 @keyframes sx-peek-in { from { opacity: 0; } }
 
-/* ---- tail -f：首页终端最后一行出现后（约 1.8s），条目从左往右一行行「打印」出来 ---- */
-.printing .tabs { animation: sx-fade 0.3s 1.77s both; }
-.printing .rows > li { animation: sx-print 0.42s calc(1.97s + var(--i) * 0.14s) steps(14, end) both; }
+/* ---- tail -f：首页终端最后一行出现后（约 0.7s），条目从左往右一行行「打印」出来，1 秒多就出齐 ---- */
+.printing .tabs { animation: sx-fade 0.25s 0.75s both; }
+.printing .rows > li { animation: sx-print 0.3s calc(0.85s + var(--i) * 0.06s) steps(12, end) both; }
 
 @keyframes sx-fade { from { opacity: 0; } }
 @keyframes sx-print {
@@ -200,6 +200,11 @@ function onPeekError() {
 
 @media (prefers-reduced-motion: reduce) {
   .printing .tabs, .printing .rows > li { animation: none; }
+}
+
+/* 触屏：筛选按钮撑到 44px 高 */
+@media (pointer: coarse) {
+  .tab { min-height: 44px; padding: 0 14px; }
 }
 
 @media (max-width: 640px) {

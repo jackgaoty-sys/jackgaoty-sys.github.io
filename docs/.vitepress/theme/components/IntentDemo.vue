@@ -159,6 +159,10 @@ const needs = computed(() => parse(input.value))
 }
 .examples button:hover { color: var(--vp-c-text-1); border-color: var(--vp-c-text-3); }
 .examples button.on { color: var(--vp-c-brand-1); border-color: var(--vp-c-brand-1); }
+/* 触屏：示例按钮撑到 44px 高 */
+@media (pointer: coarse) {
+  .examples button { min-height: 44px; padding: 0 12px; }
+}
 
 .out { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--vp-c-divider); font-size: 13.5px; }
 .need + .need { margin-top: 12px; }

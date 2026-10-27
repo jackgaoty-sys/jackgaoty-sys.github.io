@@ -10,11 +10,12 @@
   --sx-green-3: #3f8f6c;
   --sx-green-4: #a9d8c0;
 
-  --c-trace: #1f78b4;
-  --c-dump: #11804f;
-  --c-escape: #c2522f;
+  /* 浅色下的强调色都压到在三种底色（页面 / 卡片 / 终端）上 ≥ 4.5:1 */
+  --c-trace: #1d70a7;
+  --c-dump: #107b4c;
+  --c-escape: #b24b2b;
   /* 笔记成熟度 [wip] 的颜色（draft 用 text-3，stable 用品牌绿） */
-  --c-wip: #9a6700;
+  --c-wip: #926200;
 
   --sx-term-bg: #f4f5f0;
   --sx-glow: rgba(17, 128, 79, 0.25);
@@ -30,7 +31,7 @@
   /* text-3 用在日期、编号这类小字上，在三种底色上都要 ≥ 4.5:1（WCAG AA） */
   --vp-c-text-3: #646e79;
 
-  --vp-c-brand-1: #11804f;
+  --vp-c-brand-1: #107b4c;
   --vp-c-brand-2: #169a61;
   --vp-c-brand-3: #1daf6f;
   --vp-c-brand-soft: rgba(17, 128, 79, 0.1);
@@ -78,7 +79,30 @@
 .c-dump { --sx-c: var(--c-dump); }
 .c-escape { --sx-c: var(--c-escape); }
 
+/* ---------------------------------------------------------------
+   浏览器自带的那些表面也归设计管：选区、光标、滚动条、键盘焦点环
+   --------------------------------------------------------------- */
+
 ::selection { background: var(--vp-c-brand-soft); }
+
+:root {
+  caret-color: var(--vp-c-brand-1);
+  accent-color: var(--vp-c-brand-1);
+  scrollbar-color: var(--vp-c-divider) transparent;
+}
+
+/* 键盘焦点环：用 :where 不加权重，VitePress 自己定义过焦点样式的控件仍以它为准 */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--vp-c-brand-1);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 只给读屏看的文字 */
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+}
 
 /* ---------------------------------------------------------------
    导航：站名和菜单都走等宽，像一条命令行
@@ -112,14 +136,8 @@ html.sx-just-unlocked .VPNavBarMenuLink[href='/escape/'] { animation: sx-nav-in 
 
 .vp-doc h1 { letter-spacing: -0.01em; }
 
-/* h2 前面挂一个淡淡的 ##，提醒这是一份 .md */
+/* 正文栏保持安静：终端味留在框架上（导航、终端、代码块），标题不挂装饰 */
 .vp-doc h2 { border-top-color: var(--vp-c-divider); }
-.vp-doc h2::before {
-  content: '## ';
-  font-family: var(--vp-font-family-mono);
-  font-weight: 400;
-  color: var(--vp-c-text-3);
-}
 
 .vp-doc blockquote { border-left-color: var(--vp-c-brand-1); }
 .vp-doc blockquote > p { color: var(--vp-c-text-2); }

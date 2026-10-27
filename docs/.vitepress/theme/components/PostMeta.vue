@@ -13,7 +13,6 @@ const entry = computed(() => log.find((e) => e.url === path.value))
 
 <template>
   <div v-if="entry" class="sx-meta" :class="'c-' + entry.channel">
-    <p class="cmd"><span class="ps">$</span> cat {{ entry.url.slice(1) }}.md</p>
     <p class="tags">
       <a class="ch" :href="'/' + entry.channel + '/'">{{ entry.channel }}</a>
       <span class="no">#{{ pad(entry.no) }}</span>
@@ -24,15 +23,12 @@ const entry = computed(() => log.find((e) => e.url === path.value))
     </p>
   </div>
   <div v-else-if="path === '/readme'" class="sx-meta">
-    <p class="cmd"><span class="ps">$</span> cat README.md</p>
     <p class="tags"><span class="ch">readme</span><span class="no">#000</span><span>pinned</span></p>
   </div>
 </template>
 
 <style scoped>
 .sx-meta { margin-bottom: 20px; font-family: var(--vp-font-family-mono); }
-.cmd { margin: 0 0 6px; font-size: 12.5px; color: var(--vp-c-text-3); overflow-wrap: anywhere; }
-.ps { color: var(--vp-c-brand-1); margin-right: 4px; }
 .tags { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0; font-size: 13px; color: var(--vp-c-text-2); }
 .ch {
   font-weight: 600; color: var(--sx-c, var(--vp-c-text-1)); text-decoration: none;
